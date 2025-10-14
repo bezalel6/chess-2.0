@@ -80,6 +80,6 @@ cg-board square.current-premove {
   animation: scroll-vertical 40s linear infinite;
 }
 
-.animate-scroll-vertical:hover {
+/* .animate-scroll-vertical:hover {
   animation-play-state: paused;
-}
+} */

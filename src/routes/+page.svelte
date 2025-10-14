@@ -1,46 +1,7 @@
 <script lang="ts">
-	const testimonials = [
-		{
-			quote: "Can't believe we got Chess 2 before GTA 6",
-			author: "— Gary, Professional Gamer"
-		},
-		{
-			quote: "Finally, they fixed all the bugs from Chess 1",
-			author: "— Magnus, Fashion Enthusiast"
-		},
-		{
-			quote: "Chat, is this real? Chat? CHAT?!",
-			author: "— Hikaru, Variety Streamer"
-		},
-		{
-			quote: "This is the position. And in this position, we resign",
-			author: "— Levy, New Yorker"
-		},
-		{
-			quote: "Worst interface. Worst design. Worst game. But objectively, it's fine",
-			author: "— Ben, Truth Teller"
-		},
-		{
-			quote: "So yeah, pretty cool. Let's see if there's a better option here",
-			author: "— Eric, Board Game Collector"
-		},
-		{
-			quote: "Sorry about that. Now, let's pause the game and see what happens",
-			author: "— Antonio, Dog Owner"
-		},
-		{
-			quote: "We're going to calculate this exactly and find the only move",
-			author: "— Daniel, Bedroom Streamer"
-		},
-		{
-			quote: "I don't know, this looks kinda sus not gonna lie",
-			author: "— Alexandra, Sister"
-		},
-		{
-			quote: "The vibrations told me this version would be better",
-			author: "— Hans, Analyst"
-		}
-	];
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 </script>
 
 <svelte:head>
@@ -73,7 +34,7 @@
 
 				<div class="relative h-32 w-full overflow-hidden rounded-lg border border-[#404040] bg-[#1e1e1e]">
 					<div class="animate-scroll-vertical p-4">
-						{#each [...testimonials, ...testimonials] as testimonial}
+						{#each [...data.testimonials, ...data.testimonials] as testimonial}
 							<div class="mb-6">
 								<p class="text-[#e8e8e8] italic text-sm mb-2">"{testimonial.quote}"</p>
 								<p class="text-[#a0a0a0] text-xs">{testimonial.author}</p>
