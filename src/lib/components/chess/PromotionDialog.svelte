@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PieceSymbol } from '$lib/types/chess';
+	import { onMount } from 'svelte';
 
 	let {
 		color,
@@ -18,12 +19,25 @@
 		{ symbol: 'n', name: 'Knight', unicode: color === 'w' ? '♘' : '♞' }
 	];
 
+	let dialogElement: HTMLDivElement;
+
+	onMount(() => {
+		// Focus the dialog when it mounts for accessibility
+		dialogElement?.focus();
+	});
+
 	function handleSelect(piece: PieceSymbol) {
 		onselect(piece);
 	}
 
 	function handleBackdropClick() {
 		oncancel();
+	}
+
+	function handleBackdropKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+			oncancel();
+		}
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
@@ -38,29 +52,35 @@
 <div
 	class="promotion-backdrop"
 	onclick={handleBackdropClick}
-	role="presentation"
+	onkeydown={handleBackdropKeydown}
+	role="button"
+	tabindex="0"
+	aria-label="Close promotion dialog"
 >
 	<div
+		bind:this={dialogElement}
 		class="promotion-dialog"
 		onclick={(e) => e.stopPropagation()}
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="promotion-title"
+		tabindex="-1"
 	>
 		<h3 id="promotion-title" class="promotion-title">Promote Pawn</h3>
 		<div class="promotion-grid">
 			{#each pieces as piece}
 				<button
+					type="button"
 					class="promotion-option"
 					onclick={() => handleSelect(piece.symbol)}
-					title={piece.name}
+					aria-label={`Promote to ${piece.name}`}
 				>
-					<span class="piece-icon">{piece.unicode}</span>
+					<span class="piece-icon" aria-hidden="true">{piece.unicode}</span>
 					<span class="piece-name">{piece.name}</span>
 				</button>
 			{/each}
 		</div>
-		<button class="promotion-cancel" onclick={oncancel}>
+		<button type="button" class="promotion-cancel" onclick={oncancel}>
 			Cancel
 		</button>
 	</div>
@@ -81,6 +101,10 @@
 		animation: fadeIn 0.2s ease-out;
 	}
 
+	.promotion-backdrop:focus {
+		outline: none;
+	}
+
 	@keyframes fadeIn {
 		from {
 			opacity: 0;
@@ -99,6 +123,11 @@
 		animation: slideUp 0.3s ease-out;
 		max-width: 400px;
 		width: 90%;
+	}
+
+	.promotion-dialog:focus {
+		outline: none;
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 3px rgba(74, 158, 255, 0.5);
 	}
 
 	@keyframes slideUp {
