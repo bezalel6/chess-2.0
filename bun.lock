@@ -3,6 +3,10 @@
   "workspaces": {
     "": {
       "name": "chess-2.0",
+      "dependencies": {
+        "chess.js": "^1.0.0",
+        "chessground": "^9.0.0",
+      },
       "devDependencies": {
         "@sveltejs/adapter-auto": "^6.1.0",
         "@sveltejs/adapter-node": "^5.3.3",
@@ -201,6 +205,10 @@
     "browserslist": ["browserslist@4.26.3", "", { "dependencies": { "baseline-browser-mapping": "^2.8.9", "caniuse-lite": "^1.0.30001746", "electron-to-chromium": "^1.5.227", "node-releases": "^2.0.21", "update-browserslist-db": "^1.1.3" }, "bin": { "browserslist": "cli.js" } }, "sha512-lAUU+02RFBuCKQPj/P6NgjlbCnLBMp4UtgTx7vNHd3XSIJF87s9a5rA3aH2yw3GS9DqZAUbOtZdCCiZeVRqt0w=="],
 
     "caniuse-lite": ["caniuse-lite@1.0.30001750", "", {}, "sha512-cuom0g5sdX6rw00qOoLNSFCJ9/mYIsuSOA+yzpDw8eopiFqcVwQvZHqov0vmEighRxX++cfC0Vg1G+1Iy/mSpQ=="],
+
+    "chess.js": ["chess.js@1.4.0", "", {}, "sha512-BBJgrrtKQOzFLonR0l+k64A98NLemPwNsCskwb+29bRwobUa4iTm51E1kwGPbWXAcfdDa18nad6vpPPKPWarqw=="],
+
+    "chessground": ["chessground@9.2.1", "", {}, "sha512-KIdxm0zD69e62XRwdnFB0XUNYSzn5HM3pMazRCwpfruRUowFI8y+1OAK5YSyBff29myeV1/4o5Q8T191+Irbog=="],
 
     "chokidar": ["chokidar@4.0.3", "", { "dependencies": { "readdirp": "^4.0.1" } }, "sha512-Qgzu8kfBvo+cA4962jnP1KkS6Dop5NS6g7R5LFYJr4b8Ub94PPQXUksCw9PvXoeXPRRddRNC5C1JQUR2SMGtnA=="],
 
