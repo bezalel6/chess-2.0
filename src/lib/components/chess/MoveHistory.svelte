@@ -34,12 +34,15 @@
 		padding: 1.5rem;
 		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 		border: 1px solid #404040;
-		max-height: 500px;
-		overflow-y: auto;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
 	}
 
 	.move-history h3 {
 		color: #e8e8e8;
+		flex-shrink: 0;
 	}
 
 	.move-history p {
@@ -50,6 +53,29 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
+		overflow-y: auto;
+		overflow-x: hidden;
+		flex: 1;
+		padding-right: 0.5rem;
+	}
+
+	/* Custom scrollbar styling */
+	.moves-list::-webkit-scrollbar {
+		width: 8px;
+	}
+
+	.moves-list::-webkit-scrollbar-track {
+		background: #1e1e1e;
+		border-radius: 4px;
+	}
+
+	.moves-list::-webkit-scrollbar-thumb {
+		background: #4a9eff;
+		border-radius: 4px;
+	}
+
+	.moves-list::-webkit-scrollbar-thumb:hover {
+		background: #3b8fe0;
 	}
 
 	.move-entry {
