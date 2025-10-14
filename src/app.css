@@ -1,18 +1,24 @@
 @import "tailwindcss";
 
-/* Chessground styles */
+/* Chessground styles - MUST BE IN THIS ORDER */
+/* 1. Base CSS (structure) */
 @import "chessground/assets/chessground.base.css";
+
+/* 2. Theme CSS (colors) */
+@import "chessground/assets/chessground.brown.css";
+
+/* 3. Piece set CSS (piece images) */
 @import "chessground/assets/chessground.cburnett.css";
 
-/* Custom board colors - clean blue and white */
+/* Optional: Override colors after theme import
+   The brown theme already uses these colors:
+   - Light squares: #f0d9b5 (warm beige)
+   - Dark squares: created by SVG with opacity 0.2
+
+   To customize, you can override the background-color here:
+*/
+/*
 cg-board {
-	background-color: #f0d9b5;
+  background-color: #yourColorHere;
 }
-
-cg-board square.white {
-	background-color: #f0d9b5;
-}
-
-cg-board square.black {
-	background-color: #b58863;
-}
+*/
