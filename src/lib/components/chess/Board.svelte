@@ -3,11 +3,19 @@
 	import type { Api } from 'chessground/api';
 	import type { Color } from 'chessground/types';
 	import { gameStore } from '$lib/stores/game.svelte';
+	import PromotionDialog from './PromotionDialog.svelte';
+	import type { PieceSymbol, Square } from '$lib/types/chess';
 	import { onMount } from 'svelte';
 
 	// Board container element
 	let boardElement: HTMLDivElement;
 	let ground: Api | null = null;
+
+	// Promotion state
+	let showPromotion = $state(false);
+	let promotionFrom = $state<Square | null>(null);
+	let promotionTo = $state<Square | null>(null);
+	let promotionColor = $state<'w' | 'b'>('w');
 
 	// Props
 	let {
@@ -78,9 +86,12 @@
 			((piece.color === 'w' && to[1] === '8') ||
 			 (piece.color === 'b' && to[1] === '1'));
 
-		if (isPromotion) {
+		if (isPromotion && piece) {
 			// Show promotion dialog
-			showPromotionDialog(from, to);
+			showPromotion = true;
+			promotionFrom = from as Square;
+			promotionTo = to as Square;
+			promotionColor = piece.color;
 		} else {
 			// Make the move
 			const success = gameStore.makeMove(from as any, to as any);
@@ -94,14 +105,29 @@
 		}
 	}
 
-	function showPromotionDialog(from: string, to: string) {
-		// For now, default to queen promotion
-		// TODO: Add proper promotion UI
-		const success = gameStore.makeMove(from as any, to as any, 'q');
+	function handlePromotionSelect(piece: PieceSymbol) {
+		if (promotionFrom && promotionTo) {
+			const success = gameStore.makeMove(promotionFrom, promotionTo, piece);
 
-		if (!success && ground) {
+			if (!success && ground) {
+				ground.set({ fen: gameStore.fen });
+			}
+		}
+
+		showPromotion = false;
+		promotionFrom = null;
+		promotionTo = null;
+	}
+
+	function handlePromotionCancel() {
+		// Reset board to previous position
+		if (ground) {
 			ground.set({ fen: gameStore.fen });
 		}
+
+		showPromotion = false;
+		promotionFrom = null;
+		promotionTo = null;
 	}
 </script>
 
@@ -132,6 +158,14 @@
 		</div>
 	{/if}
 </div>
+
+{#if showPromotion}
+	<PromotionDialog
+		color={promotionColor}
+		onselect={handlePromotionSelect}
+		oncancel={handlePromotionCancel}
+	/>
+{/if}
 
 <style>
 	.board-container {
