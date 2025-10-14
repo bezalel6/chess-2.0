@@ -4,14 +4,14 @@ This directory contains sound effects for chess game events.
 
 ## Required Sound Files
 
-Place the following MP3 files in this directory:
+Place the following WAV files in this directory:
 
-- `move.mp3` - Standard piece move
-- `capture.mp3` - Piece capture
-- `check.mp3` - Check notification
-- `castle.mp3` - Castling move
-- `promote.mp3` - Pawn promotion
-- `game-end.mp3` - Game over (checkmate/stalemate/draw)
+- `move.wav` - Standard piece move
+- `capture.wav` - Piece capture
+- `check.wav` - Check notification
+- `castle.wav` - Castling move
+- `promote.wav` - Pawn promotion
+- `game-end.wav` - Game over (checkmate/stalemate/draw)
 
 ## Where to Get Sounds
 
@@ -23,10 +23,12 @@ Free chess sound effects can be found at:
 
 ## Format Requirements
 
-- Format: MP3
+- Format: WAV (PCM uncompressed)
 - Sample rate: 44.1kHz recommended
-- Bit rate: 128kbps or higher
+- Bit depth: 16-bit or higher
 - Duration: Keep sounds short (< 1 second for moves, < 2 seconds for game-end)
+
+Note: WAV files provide better quality and compatibility across browsers compared to MP3.
 
 ## License
 

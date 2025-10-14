@@ -26,14 +26,13 @@ class SoundService {
 		if (this.initialized) return;
 		this.initialized = true;
 
-		// Initialize sound files
-		// Using free chess sounds from lichess.org-style sources
-		this.loadSound('move', '/sounds/move.mp3', 0.5);
-		this.loadSound('capture', '/sounds/capture.mp3', 0.6);
-		this.loadSound('check', '/sounds/check.mp3', 0.7);
-		this.loadSound('castle', '/sounds/castle.mp3', 0.5);
-		this.loadSound('promote', '/sounds/promote.mp3', 0.6);
-		this.loadSound('game-end', '/sounds/game-end.mp3', 0.7);
+		// Initialize sound files (.wav format)
+		this.loadSound('move', '/sounds/move.wav', 0.5);
+		this.loadSound('capture', '/sounds/capture.wav', 0.6);
+		this.loadSound('check', '/sounds/check.wav', 0.7);
+		this.loadSound('castle', '/sounds/castle.wav', 0.5);
+		this.loadSound('promote', '/sounds/promote.wav', 0.6);
+		this.loadSound('game-end', '/sounds/game-end.wav', 0.7);
 	}
 
 	private loadSound(type: SoundType, src: string, volume: number): void {
