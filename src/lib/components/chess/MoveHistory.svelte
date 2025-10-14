@@ -12,7 +12,7 @@
 		<p class="text-gray-500 italic">No moves yet</p>
 	{:else}
 		<div class="moves-list">
-			{#each history as entry (entry.moveNumber)}
+			{#each history as entry, i (i)}
 				<div class="move-entry">
 					<span class="move-number">{entry.moveNumber}.</span>
 					{#if entry.white}

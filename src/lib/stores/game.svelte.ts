@@ -96,9 +96,14 @@ export const gameStore = {
 					white: moveWithMetadata
 				});
 			} else {
+				// Create new array to trigger reactivity
 				const lastEntry = history[history.length - 1];
 				if (lastEntry) {
-					lastEntry.black = moveWithMetadata;
+					const updatedEntry = {
+						...lastEntry,
+						black: moveWithMetadata
+					};
+					history = [...history.slice(0, -1), updatedEntry];
 				}
 			}
 
@@ -116,9 +121,15 @@ export const gameStore = {
 			const lastEntry = history[history.length - 1];
 			if (lastEntry) {
 				if (lastEntry.black) {
-					delete lastEntry.black;
+					// Remove black's move - create new entry without black
+					const updatedEntry = {
+						moveNumber: lastEntry.moveNumber,
+						white: lastEntry.white
+					};
+					history = [...history.slice(0, -1), updatedEntry];
 				} else if (lastEntry.white) {
-					history.pop();
+					// Remove entire entry (white's move)
+					history = history.slice(0, -1);
 				}
 			}
 
