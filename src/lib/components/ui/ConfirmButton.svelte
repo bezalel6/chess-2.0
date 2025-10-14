@@ -32,28 +32,28 @@
 {#if confirming}
 	<div class="confirm-wrapper">
 		<span class="confirm-text">{confirmText}</span>
-		<button onclick={handleConfirm} class="confirm-yes">
+		<button type="button" onclick={handleConfirm} class="confirm-yes">
 			✓ Yes
 		</button>
-		<button onclick={handleCancel} class="confirm-no">
+		<button type="button" onclick={handleCancel} class="confirm-no">
 			✗ No
 		</button>
 	</div>
 {:else}
-	<button onclick={handleClick} class="idle-button {className}">
+	<button type="button" onclick={handleClick} class={className}>
 		{@render children?.()}
 	</button>
 {/if}
 
 <style>
-	.idle-button {
-		color: inherit;
-	}
 	.confirm-wrapper {
 		display: flex;
 		align-items: center;
+		justify-content: center;
 		gap: 0.5rem;
-		padding: 0.75rem 1rem;
+		flex: 1;
+		min-width: 120px;
+		padding: 0.5rem 1rem;
 		background-color: #2d2d2d;
 		border: 2px solid #facc15;
 		border-radius: 0.5rem;
