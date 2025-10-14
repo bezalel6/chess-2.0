@@ -14,54 +14,72 @@ cg-board {
   background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOng9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiCiAgICAgdmlld0JveD0iMCAwIDggOCIgc2hhcGUtcmVuZGVyaW5nPSJjcmlzcEVkZ2VzIj4KPGcgaWQ9ImEiPgogIDxnIGlkPSJiIj4KICAgIDxnIGlkPSJjIj4KICAgICAgPGcgaWQ9ImQiPgogICAgICAgIDxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGlkPSJlIiBmaWxsPSIjZGVlM2U2Ii8+CiAgICAgICAgPHVzZSB4PSIxIiB5PSIxIiBocmVmPSIjZSIgeDpocmVmPSIjZSIvPgogICAgICAgIDxyZWN0IHk9IjEiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGlkPSJmIiBmaWxsPSIjOGNhMmFkIi8+CiAgICAgICAgPHVzZSB4PSIxIiB5PSItMSIgaHJlZj0iI2YiIHg6aHJlZj0iI2YiLz4KICAgICAgPC9nPgogICAgICA8dXNlIHg9IjIiIGhyZWY9IiNkIiB4OmhyZWY9IiNkIi8+CiAgICA8L2c+CiAgICA8dXNlIHg9IjQiIGhyZWY9IiNjIiB4OmhyZWY9IiNjIi8+CiAgPC9nPgogIDx1c2UgeT0iMiIgaHJlZj0iI2IiIHg6aHJlZj0iI2IiLz4KPC9nPgo8dXNlIHk9IjQiIGhyZWY9IiNhIiB4OmhyZWY9IiNhIi8+Cjwvc3ZnPg==');
 }
 
-/* Interactive board square colors */
+/* Interactive board square colors - Lichess blue theme */
 cg-board square.move-dest {
-  background: radial-gradient(rgba(74, 222, 128, 0.5) 22%, #4ade80 0, rgba(0, 0, 0, 0.3) 0, rgba(0, 0, 0, 0) 0);
+  background: radial-gradient(rgba(20, 85, 30, 0.5) 22%, rgba(20, 85, 30, 0.5) 0, rgba(0, 0, 0, 0.3) 0, rgba(0, 0, 0, 0) 0);
 }
 
 cg-board square.premove-dest {
-  background: radial-gradient(rgba(74, 158, 255, 0.5) 22%, #4a9eff 0, rgba(0, 0, 0, 0.3) 0, rgba(0, 0, 0, 0) 0);
+  background: radial-gradient(rgba(20, 30, 85, 0.5) 22%, rgba(20, 30, 85, 0.5) 0, rgba(0, 0, 0, 0.3) 0, rgba(0, 0, 0, 0) 0);
 }
 
 cg-board square.oc.move-dest {
-  background: radial-gradient(transparent 0%, transparent 80%, rgba(74, 222, 128, 0.3) 80%);
+  background: radial-gradient(transparent 0%, transparent 80%, rgba(20, 85, 30, 0.5) 80%);
 }
 
 cg-board square.oc.premove-dest {
-  background: radial-gradient(transparent 0%, transparent 80%, rgba(74, 158, 255, 0.3) 80%);
+  background: radial-gradient(transparent 0%, transparent 80%, rgba(20, 30, 85, 0.5) 80%);
 }
 
 cg-board square.move-dest:hover {
-  background: rgba(74, 222, 128, 0.3);
+  background: rgba(20, 85, 30, 0.5);
 }
 
 cg-board square.premove-dest:hover {
-  background: rgba(74, 158, 255, 0.3);
+  background: rgba(20, 30, 85, 0.5);
 }
 
 cg-board square.last-move {
-  background-color: rgba(74, 158, 255, 0.35);
+  background-color: rgba(155, 199, 0, 0.41);
 }
 
 cg-board square.selected {
-  background-color: rgba(74, 222, 128, 0.4);
+  background-color: rgba(20, 85, 30, 0.5);
 }
 
 cg-board square.check {
   background: radial-gradient(
     ellipse at center,
-    rgba(248, 113, 113, 1) 0%,
-    rgba(239, 68, 68, 1) 25%,
-    rgba(220, 38, 38, 0) 89%,
-    rgba(185, 28, 28, 0) 100%
+    rgba(230, 0, 0, 1) 0%,
+    rgba(169, 0, 0, 1) 25%,
+    rgba(169, 0, 0, 0) 89%,
+    rgba(169, 0, 0, 0) 100%
   );
 }
 
 cg-board square.current-premove {
-  background-color: rgba(74, 158, 255, 0.5);
+  background-color: rgba(20, 30, 85, 0.5);
 }
 
 /* Coordinate label colors for dark theme */
 .cg-wrap coords {
   color: rgba(232, 232, 232, 0.6);
+}
+
+/* Testimonials scrolling animation */
+@keyframes scroll-vertical {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+.animate-scroll-vertical {
+  animation: scroll-vertical 40s linear infinite;
+}
+
+.animate-scroll-vertical:hover {
+  animation-play-state: paused;
 }
