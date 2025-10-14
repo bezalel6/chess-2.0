@@ -64,19 +64,20 @@
 		flex-wrap: wrap;
 		gap: 0.75rem;
 		padding: 1rem;
-		background-color: white;
+		background-color: #2d2d2d;
 		border-radius: 0.5rem;
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+		border: 1px solid #404040;
 	}
 
 	.control-button {
 		flex: 1;
 		min-width: 120px;
 		padding: 0.75rem 1.5rem;
-		border: 2px solid #e5e7eb;
+		border: 2px solid #404040;
 		border-radius: 0.5rem;
-		background-color: white;
-		color: #374151;
+		background-color: #2d2d2d;
+		color: #e8e8e8;
 		font-weight: 600;
 		font-size: 0.875rem;
 		cursor: pointer;
@@ -84,8 +85,8 @@
 	}
 
 	.control-button:hover:not(:disabled) {
-		background-color: #f9fafb;
-		border-color: #d1d5db;
+		background-color: #3d3d3d;
+		border-color: #4a9eff;
 		transform: translateY(-1px);
 	}
 
@@ -94,27 +95,28 @@
 	}
 
 	.control-button:disabled {
-		opacity: 0.5;
+		opacity: 0.3;
 		cursor: not-allowed;
+		color: #6b7280;
 	}
 
 	.control-button.new-game:hover:not(:disabled) {
-		border-color: #3b82f6;
-		color: #3b82f6;
+		border-color: #4a9eff;
+		color: #4a9eff;
 	}
 
 	.control-button.undo:hover:not(:disabled) {
-		border-color: #f59e0b;
-		color: #f59e0b;
+		border-color: #facc15;
+		color: #facc15;
 	}
 
 	.control-button.copy-fen:hover:not(:disabled) {
-		border-color: #10b981;
-		color: #10b981;
+		border-color: #4ade80;
+		color: #4ade80;
 	}
 
 	.control-button.load-fen:hover:not(:disabled) {
-		border-color: #8b5cf6;
-		color: #8b5cf6;
+		border-color: #c084fc;
+		color: #c084fc;
 	}
 </style>

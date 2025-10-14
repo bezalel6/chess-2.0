@@ -4,21 +4,64 @@
 /* 1. Base CSS (structure) */
 @import "chessground/assets/chessground.base.css";
 
-/* 2. Theme CSS (colors) */
-@import "chessground/assets/chessground.brown.css";
-
-/* 3. Piece set CSS (piece images) */
+/* 2. Piece set CSS (piece images) */
 @import "chessground/assets/chessground.cburnett.css";
 
-/* Optional: Override colors after theme import
-   The brown theme already uses these colors:
-   - Light squares: #f0d9b5 (warm beige)
-   - Dark squares: created by SVG with opacity 0.2
-
-   To customize, you can override the background-color here:
-*/
-/*
+/* 3. Dark theme color overrides */
+/* Dark blue/gray theme for board */
 cg-board {
-  background-color: #yourColorHere;
+  background-color: #7fa5c8;
+  background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4PSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIgogICAgIHZpZXdCb3g9IjAgMCA4IDgiIHNoYXBlLXJlbmRlcmluZz0iY3Jpc3BFZGdlcyI+CjxnIGlkPSJhIj4KICA8ZyBpZD0iYiI+CiAgICA8ZyBpZD0iYyI+CiAgICAgIDxnIGlkPSJkIj4KICAgICAgICA8cmVjdCB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBpZD0iZSIgb3BhY2l0eT0iMCIvPgogICAgICAgIDx1c2UgeD0iMSIgeT0iMSIgaHJlZj0iI2UiIHg6aHJlZj0iI2UiLz4KICAgICAgICA8cmVjdCB5PSIxIiB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBpZD0iZiIgb3BhY2l0eT0iMC4zIi8+CiAgICAgICAgPHVzZSB4PSIxIiB5PSItMSIgaHJlZj0iI2YiIHg6aHJlZj0iI2YiLz4KICAgICAgPC9nPgogICAgICA8dXNlIHg9IjIiIGhyZWY9IiNkIiB4OmhyZWY9IiNkIi8+CiAgICA8L2c+CiAgICA8dXNlIHg9IjQiIGhyZWY9IiNjIiB4OmhyZWY9IiNjIi8+CiAgPC9nPgogIDx1c2UgeT0iMiIgaHJlZj0iI2IiIHg6aHJlZj0iI2IiLz4KPC9nPgo8dXNlIHk9IjQiIGhyZWY9IiNhIiB4OmhyZWY9IiNhIi8+Cjwvc3ZnPg==');
 }
-*/
+
+/* Interactive board square colors */
+cg-board square.move-dest {
+  background: radial-gradient(rgba(74, 222, 128, 0.5) 22%, #4ade80 0, rgba(0, 0, 0, 0.3) 0, rgba(0, 0, 0, 0) 0);
+}
+
+cg-board square.premove-dest {
+  background: radial-gradient(rgba(74, 158, 255, 0.5) 22%, #4a9eff 0, rgba(0, 0, 0, 0.3) 0, rgba(0, 0, 0, 0) 0);
+}
+
+cg-board square.oc.move-dest {
+  background: radial-gradient(transparent 0%, transparent 80%, rgba(74, 222, 128, 0.3) 80%);
+}
+
+cg-board square.oc.premove-dest {
+  background: radial-gradient(transparent 0%, transparent 80%, rgba(74, 158, 255, 0.3) 80%);
+}
+
+cg-board square.move-dest:hover {
+  background: rgba(74, 222, 128, 0.3);
+}
+
+cg-board square.premove-dest:hover {
+  background: rgba(74, 158, 255, 0.3);
+}
+
+cg-board square.last-move {
+  background-color: rgba(74, 158, 255, 0.35);
+}
+
+cg-board square.selected {
+  background-color: rgba(74, 222, 128, 0.4);
+}
+
+cg-board square.check {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(248, 113, 113, 1) 0%,
+    rgba(239, 68, 68, 1) 25%,
+    rgba(220, 38, 38, 0) 89%,
+    rgba(185, 28, 28, 0) 100%
+  );
+}
+
+cg-board square.current-premove {
+  background-color: rgba(74, 158, 255, 0.5);
+}
+
+/* Coordinate label colors for dark theme */
+.cg-wrap coords {
+  color: rgba(232, 232, 232, 0.6);
+}

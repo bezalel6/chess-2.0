@@ -29,12 +29,21 @@
 
 <style>
 	.move-history {
-		background-color: white;
+		background-color: #2d2d2d;
 		border-radius: 0.5rem;
 		padding: 1.5rem;
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+		border: 1px solid #404040;
 		max-height: 500px;
 		overflow-y: auto;
+	}
+
+	.move-history h3 {
+		color: #e8e8e8;
+	}
+
+	.move-history p {
+		color: #a0a0a0;
 	}
 
 	.moves-list {
@@ -53,12 +62,12 @@
 	}
 
 	.move-entry:hover {
-		background-color: #f3f4f6;
+		background-color: #3d3d3d;
 	}
 
 	.move-number {
 		font-weight: 600;
-		color: #6b7280;
+		color: #a0a0a0;
 		min-width: 2rem;
 	}
 
@@ -72,14 +81,14 @@
 	}
 
 	.white-move {
-		background-color: #f9fafb;
-		color: #111827;
-		border: 1px solid #e5e7eb;
+		background-color: #e8e8e8;
+		color: #1e1e1e;
+		border: 1px solid #a0a0a0;
 	}
 
 	.black-move {
-		background-color: #1f2937;
-		color: #f9fafb;
-		border: 1px solid #374151;
+		background-color: #404040;
+		color: #e8e8e8;
+		border: 1px solid #505050;
 	}
 </style>

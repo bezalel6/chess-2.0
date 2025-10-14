@@ -134,6 +134,9 @@
 		width: 100%;
 		max-width: 600px;
 		margin: 0 auto;
+		border-radius: 0.5rem;
+		overflow: hidden;
+		box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
 	}
 
 	.chessground-board {
@@ -153,22 +156,26 @@
 		text-align: center;
 		pointer-events: none;
 		z-index: 10;
-		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+		box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+		border: 2px solid;
 	}
 
 	.status-message.check {
-		background-color: rgba(255, 193, 7, 0.95);
-		color: #000;
+		background-color: rgba(250, 204, 21, 0.95);
+		color: #1e1e1e;
+		border-color: #facc15;
 	}
 
 	.status-message.checkmate {
-		background-color: rgba(244, 67, 54, 0.95);
-		color: #fff;
+		background-color: rgba(248, 113, 113, 0.95);
+		color: #1e1e1e;
+		border-color: #f87171;
 	}
 
 	.status-message.stalemate,
 	.status-message.draw {
-		background-color: rgba(96, 125, 139, 0.95);
-		color: #fff;
+		background-color: rgba(74, 158, 255, 0.95);
+		color: #1e1e1e;
+		border-color: #4a9eff;
 	}
 </style>
