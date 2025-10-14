@@ -1,38 +1,115 @@
-# sv
+# Chess 2.0
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A modern chess application built with SvelteKit, TypeScript, and Tailwind CSS.
 
-## Creating a project
+## Tech Stack
 
-If you're seeing this, you've probably already done this step. Congrats!
+- **Framework**: SvelteKit 2.43.2 with Svelte 5.39.5
+- **Language**: TypeScript 5.9.2
+- **Styling**: Tailwind CSS 4.1.14
+- **Build Tool**: Vite 7.1.7
+- **Package Manager**: Bun 1.3.0
+- **Deployment**: adapter-node for self-hosting
 
-```sh
-# create a new project in the current directory
-npx sv create
+## Prerequisites
 
-# create a new project in my-app
-npx sv create my-app
+- [Bun](https://bun.sh/) v1.3.0 or higher
+- Node.js 18+ (for runtime)
+
+## Getting Started
+
+### Installation
+
+```bash
+# Install dependencies
+bun install
 ```
 
-## Developing
+### Development
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+```bash
+# Start development server
+bun run dev
 
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+# Start with auto-open in browser
+bun run dev -- --open
 ```
 
-## Building
+The development server will start at `http://localhost:5173`
 
-To create a production version of your app:
+### Type Checking
 
-```sh
-npm run build
+```bash
+# Run type checks
+bun run check
+
+# Run type checks in watch mode
+bun run check:watch
 ```
 
-You can preview the production build with `npm run preview`.
+## Building for Production
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+```bash
+# Build the application
+bun run build
+
+# Preview the production build
+bun run preview
+```
+
+The build output will be in the `build/` directory, ready to run as a standalone Node.js server:
+
+```bash
+# Run production server
+node build
+```
+
+### Environment Variables
+
+The production server respects these environment variables:
+
+- `PORT` - Server port (default: 3000)
+- `HOST` - Server host (default: 0.0.0.0)
+- `ORIGIN` - The origin URL for CSRF protection
+- `SOCKET_PATH` - Unix socket path (alternative to PORT/HOST)
+
+Example:
+
+```bash
+PORT=8080 node build
+```
+
+## Project Structure
+
+```
+chess-2.0/
+├── src/
+│   ├── lib/              # Reusable components and utilities
+│   ├── routes/           # SvelteKit file-based routing
+│   │   ├── +layout.svelte   # Root layout
+│   │   └── +page.svelte     # Landing page
+│   ├── app.css           # Global Tailwind styles
+│   ├── app.d.ts          # TypeScript declarations
+│   └── app.html          # HTML template
+├── static/               # Static assets
+├── svelte.config.js      # SvelteKit configuration
+├── vite.config.ts        # Vite configuration
+├── tsconfig.json         # TypeScript configuration
+└── package.json          # Project dependencies
+```
+
+## Development Roadmap
+
+- [x] Project initialization
+- [x] Tailwind CSS setup
+- [x] adapter-node configuration
+- [x] Simple landing page
+- [ ] Chess board UI component
+- [ ] Move validation logic
+- [ ] Game state management
+- [ ] Multiplayer support (planned)
+- [ ] AI opponent (planned)
+
+## License
+
+Private project - All rights reserved
