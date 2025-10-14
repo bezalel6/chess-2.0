@@ -72,6 +72,8 @@
 				<button
 					type="button"
 					class="promotion-option"
+					class:white-piece={color === 'w'}
+					class:black-piece={color === 'b'}
 					onclick={() => handleSelect(piece.symbol)}
 					aria-label={`Promote to ${piece.name}`}
 				>
@@ -184,6 +186,20 @@
 	.piece-icon {
 		font-size: 3rem;
 		line-height: 1;
+	}
+
+	.promotion-option.white-piece .piece-icon {
+		color: #f0f0f0;
+		text-shadow:
+			0 0 2px rgba(255, 255, 255, 0.8),
+			0 2px 4px rgba(0, 0, 0, 0.5);
+	}
+
+	.promotion-option.black-piece .piece-icon {
+		color: #2d2d2d;
+		text-shadow:
+			0 0 2px rgba(0, 0, 0, 0.5),
+			0 2px 4px rgba(0, 0, 0, 0.3);
 	}
 
 	.piece-name {
