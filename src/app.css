@@ -2,5 +2,17 @@
 
 /* Chessground styles */
 @import "chessground/assets/chessground.base.css";
-@import "chessground/assets/chessground.brown.css";
 @import "chessground/assets/chessground.cburnett.css";
+
+/* Custom board colors - clean blue and white */
+cg-board {
+	background-color: #f0d9b5;
+}
+
+cg-board square.white {
+	background-color: #f0d9b5;
+}
+
+cg-board square.black {
+	background-color: #b58863;
+}

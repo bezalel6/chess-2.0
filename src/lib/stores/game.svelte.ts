@@ -5,27 +5,47 @@ import type {
 	HistoryEntry,
 	MoveWithMetadata,
 	DestsMap,
-	Square,
-	Color
+	Square
 } from '$lib/types/chess';
 
-export function createGameStore() {
-	// Private reactive state
-	let engine = $state(new GameEngine());
-	let history = $state<HistoryEntry[]>([]);
-	let currentMoveIndex = $state(0);
+// Reactive state - using $state directly for proper Svelte 5 reactivity
+let engine = $state(new GameEngine());
+let history = $state<HistoryEntry[]>([]);
+let version = $state(0); // Version counter to force reactivity
 
-	// Derived state (auto-computed from engine state)
-	let fen = $derived(engine.fen());
-	let turn = $derived(engine.turn());
-	let isCheck = $derived(engine.isCheck());
-	let isCheckmate = $derived(engine.isCheckmate());
-	let isStalemate = $derived(engine.isStalemate());
-	let isDraw = $derived(engine.isDraw());
-	let isGameOver = $derived(engine.isGameOver());
-
-	// Game status derived from checks
-	let status = $derived.by((): GameStatus => {
+// Derived state (auto-computed reactively)
+export const gameStore = {
+	// Getters that depend on version to ensure reactivity
+	get fen() {
+		version; // Access version to trigger reactivity
+		return engine.fen();
+	},
+	get turn() {
+		version;
+		return engine.turn();
+	},
+	get isCheck() {
+		version;
+		return engine.isCheck();
+	},
+	get isCheckmate() {
+		version;
+		return engine.isCheckmate();
+	},
+	get isStalemate() {
+		version;
+		return engine.isStalemate();
+	},
+	get isDraw() {
+		version;
+		return engine.isDraw();
+	},
+	get isGameOver() {
+		version;
+		return engine.isGameOver();
+	},
+	get status(): GameStatus {
+		version;
 		if (engine.isCheckmate()) return 'checkmate';
 		if (engine.isStalemate()) return 'stalemate';
 		if (engine.isInsufficientMaterial()) return 'insufficient-material';
@@ -33,10 +53,9 @@ export function createGameStore() {
 		if (engine.isDraw()) return 'draw';
 		if (engine.isCheck()) return 'check';
 		return 'active';
-	});
-
-	// Legal moves as a Map for chessground compatibility
-	let legalMoves = $derived.by((): DestsMap => {
+	},
+	get legalMoves(): DestsMap {
+		version;
 		const moves = engine.moves({ verbose: true });
 		const dests = new Map<Square, Square[]>();
 
@@ -50,135 +69,94 @@ export function createGameStore() {
 		}
 
 		return dests;
-	});
+	},
+	get history() {
+		return history;
+	},
 
-	// Public API
-	return {
-		// Getters for reactive state
-		get fen() {
-			return fen;
-		},
-		get turn() {
-			return turn;
-		},
-		get isCheck() {
-			return isCheck;
-		},
-		get isCheckmate() {
-			return isCheckmate;
-		},
-		get isStalemate() {
-			return isStalemate;
-		},
-		get isDraw() {
-			return isDraw;
-		},
-		get isGameOver() {
-			return isGameOver;
-		},
-		get status() {
-			return status;
-		},
-		get legalMoves() {
-			return legalMoves;
-		},
-		get history() {
-			return history;
-		},
-		get currentMoveIndex() {
-			return currentMoveIndex;
-		},
+	// Actions that increment version to trigger reactivity
+	makeMove(from: Square, to: Square, promotion?: string): boolean {
+		const move = engine.move(from, to, promotion);
 
-		// Actions
-		makeMove(from: Square, to: Square, promotion?: string): boolean {
-			const move = engine.move(from, to, promotion);
+		if (move) {
+			const moveNumber = Math.floor(history.length / 2) + 1;
+			const isWhiteMove = move.color === 'w';
 
-			if (move) {
-				const moveNumber = Math.floor(history.length / 2) + 1;
-				const isWhiteMove = move.color === 'w';
+			const moveWithMetadata: MoveWithMetadata = {
+				san: move.san,
+				move,
+				fen: engine.fen(),
+				timestamp: Date.now()
+			};
 
-				const moveWithMetadata: MoveWithMetadata = {
-					san: move.san,
-					move,
-					fen: engine.fen(),
-					timestamp: Date.now()
-				};
-
-				// Add to history
-				if (isWhiteMove) {
-					// Start new entry for white's move
-					history.push({
-						moveNumber,
-						white: moveWithMetadata
-					});
-				} else {
-					// Add black's move to existing entry
-					const lastEntry = history[history.length - 1];
-					if (lastEntry) {
-						lastEntry.black = moveWithMetadata;
-					}
-				}
-
-				currentMoveIndex = history.length - 1;
-				return true;
-			}
-
-			return false;
-		},
-
-		undo(): boolean {
-			const move = engine.undo();
-
-			if (move) {
-				// Remove from history
+			// Add to history
+			if (isWhiteMove) {
+				history.push({
+					moveNumber,
+					white: moveWithMetadata
+				});
+			} else {
 				const lastEntry = history[history.length - 1];
 				if (lastEntry) {
-					if (lastEntry.black) {
-						// Remove black's move
-						delete lastEntry.black;
-					} else if (lastEntry.white) {
-						// Remove white's move (entire entry)
-						history.pop();
-					}
+					lastEntry.black = moveWithMetadata;
 				}
-
-				currentMoveIndex = Math.max(0, history.length - 1);
-				return true;
 			}
 
-			return false;
-		},
-
-		reset(): void {
-			engine.reset();
-			history = [];
-			currentMoveIndex = 0;
-		},
-
-		loadFen(fenString: string): boolean {
-			const success = engine.load(fenString);
-			if (success) {
-				// Clear history when loading new position
-				history = [];
-				currentMoveIndex = 0;
-			}
-			return success;
-		},
-
-		loadPgn(pgn: string): boolean {
-			return engine.loadPgn(pgn);
-		},
-
-		getPgn(): string {
-			return engine.pgn();
-		},
-
-		// Access to engine for advanced operations
-		getEngine(): GameEngine {
-			return engine;
+			version++; // Trigger reactivity
+			return true;
 		}
-	};
-}
 
-// Create and export singleton instance
-export const gameStore = createGameStore();
+		return false;
+	},
+
+	undo(): boolean {
+		const move = engine.undo();
+
+		if (move) {
+			const lastEntry = history[history.length - 1];
+			if (lastEntry) {
+				if (lastEntry.black) {
+					delete lastEntry.black;
+				} else if (lastEntry.white) {
+					history.pop();
+				}
+			}
+
+			version++; // Trigger reactivity
+			return true;
+		}
+
+		return false;
+	},
+
+	reset(): void {
+		engine.reset();
+		history = [];
+		version++; // Trigger reactivity
+	},
+
+	loadFen(fenString: string): boolean {
+		const success = engine.load(fenString);
+		if (success) {
+			history = [];
+			version++; // Trigger reactivity
+		}
+		return success;
+	},
+
+	loadPgn(pgn: string): boolean {
+		const result = engine.loadPgn(pgn);
+		if (result) {
+			version++; // Trigger reactivity
+		}
+		return result;
+	},
+
+	getPgn(): string {
+		return engine.pgn();
+	},
+
+	getEngine(): GameEngine {
+		return engine;
+	}
+};
