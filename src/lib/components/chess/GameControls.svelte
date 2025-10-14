@@ -6,6 +6,7 @@
 	let fenInput = $state('');
 	let fenError = $state('');
 	let showCopiedMessage = $state(false);
+	let soundEnabled = $derived(gameStore.isSoundEnabled());
 
 	function handleNewGame() {
 		gameStore.reset();
@@ -45,6 +46,10 @@
 		fenInput = '';
 		fenError = '';
 	}
+
+	function handleToggleSound() {
+		gameStore.toggleSound();
+	}
 </script>
 
 <div class="game-controls">
@@ -76,6 +81,16 @@
 		class="control-button load-fen"
 	>
 		📂 Load FEN
+	</button>
+
+	<button
+		onclick={handleToggleSound}
+		class="control-button toggle-sound"
+		class:sound-on={soundEnabled}
+		class:sound-off={!soundEnabled}
+		title={soundEnabled ? 'Sound On' : 'Sound Off'}
+	>
+		{soundEnabled ? '🔊' : '🔇'} Sound
 	</button>
 </div>
 
@@ -168,6 +183,16 @@
 		color: #1e1e1e;
 		border-color: #4ade80;
 		animation: pulse 0.3s ease-out;
+	}
+
+	.game-controls :global(.control-button.toggle-sound.sound-on:hover:not(:disabled)) {
+		border-color: #4ade80;
+		color: #4ade80;
+	}
+
+	.game-controls :global(.control-button.toggle-sound.sound-off:hover:not(:disabled)) {
+		border-color: #f87171;
+		color: #f87171;
 	}
 
 	@keyframes pulse {

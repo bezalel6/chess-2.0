@@ -1,5 +1,6 @@
 // Game store using Svelte 5 runes for reactive state management
 import { GameEngine } from '$lib/chess/engine/game';
+import { soundService } from '$lib/services/sounds.svelte';
 import type {
 	GameStatus,
 	HistoryEntry,
@@ -107,11 +108,33 @@ export const gameStore = {
 				}
 			}
 
+			// Play appropriate sound effect
+			this.playMoveSound(move, promotion);
+
 			version++; // Trigger reactivity
 			return true;
 		}
 
 		return false;
+	},
+
+	playMoveSound(move: any, promotion?: string): void {
+		// Determine sound type based on move characteristics
+		if (engine.isCheckmate()) {
+			soundService.play('game-end');
+		} else if (engine.isCheck()) {
+			soundService.play('check');
+		} else if (promotion) {
+			soundService.play('promote');
+		} else if (move.flags?.includes('k') || move.flags?.includes('q')) {
+			// Castling (kingside or queenside)
+			soundService.play('castle');
+		} else if (move.captured || move.flags?.includes('c') || move.flags?.includes('e')) {
+			// Capture (including en passant)
+			soundService.play('capture');
+		} else {
+			soundService.play('move');
+		}
 	},
 
 	undo(): boolean {
@@ -144,6 +167,7 @@ export const gameStore = {
 		engine.reset();
 		history = [];
 		version++; // Trigger reactivity
+		// Don't play sound on reset
 	},
 
 	loadFen(fenString: string): boolean {
@@ -169,5 +193,14 @@ export const gameStore = {
 
 	getEngine(): GameEngine {
 		return engine;
+	},
+
+	// Sound controls
+	toggleSound(): void {
+		soundService.toggle();
+	},
+
+	isSoundEnabled(): boolean {
+		return soundService.isEnabled();
 	}
 };
