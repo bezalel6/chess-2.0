@@ -2,7 +2,7 @@
 	import { Chessground } from 'chessground';
 	import type { Api } from 'chessground/api';
 	import type { Color } from 'chessground/types';
-	import { gameStore } from '$lib/stores/game';
+	import { gameStore } from '$lib/stores/game.svelte';
 	import { onMount } from 'svelte';
 
 	// Board container element

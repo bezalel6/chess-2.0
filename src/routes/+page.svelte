@@ -2,7 +2,7 @@
 	import Board from '$lib/components/chess/Board.svelte';
 	import MoveHistory from '$lib/components/chess/MoveHistory.svelte';
 	import GameControls from '$lib/components/chess/GameControls.svelte';
-	import { gameStore } from '$lib/stores/game';
+	import { gameStore } from '$lib/stores/game.svelte';
 </script>
 
 <svelte:head>

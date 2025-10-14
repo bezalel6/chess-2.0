@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { gameStore } from '$lib/stores/game';
+	import { gameStore } from '$lib/stores/game.svelte';
 
 	function handleNewGame() {
 		if (confirm('Start a new game? Current game will be lost.')) {

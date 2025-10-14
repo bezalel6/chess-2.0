@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { gameStore } from '$lib/stores/game';
+	import { gameStore } from '$lib/stores/game.svelte';
 
 	// Get history from store
 	let history = $derived(gameStore.history);
