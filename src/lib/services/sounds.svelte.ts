@@ -2,6 +2,7 @@
 // Uses HTML5 Audio API for simple, efficient sound playback
 
 import { browser } from '$app/environment';
+import { base } from '$app/paths';
 
 type SoundType = 'move' | 'capture' | 'check' | 'castle' | 'promote' | 'game-end';
 
@@ -27,12 +28,12 @@ class SoundService {
 		this.initialized = true;
 
 		// Initialize sound files (.wav format)
-		this.loadSound('move', '/sounds/move.wav', 0.5);
-		this.loadSound('capture', '/sounds/capture.wav', 0.6);
-		this.loadSound('check', '/sounds/check.wav', 0.7);
-		this.loadSound('castle', '/sounds/castle.wav', 0.5);
-		this.loadSound('promote', '/sounds/promote.wav', 0.6);
-		this.loadSound('game-end', '/sounds/game-end.wav', 0.7);
+		this.loadSound('move', `${base}/sounds/move.wav`, 0.5);
+		this.loadSound('capture', `${base}/sounds/capture.wav`, 0.6);
+		this.loadSound('check', `${base}/sounds/check.wav`, 0.7);
+		this.loadSound('castle', `${base}/sounds/castle.wav`, 0.5);
+		this.loadSound('promote', `${base}/sounds/promote.wav`, 0.6);
+		this.loadSound('game-end', `${base}/sounds/game-end.wav`, 0.7);
 	}
 
 	private loadSound(type: SoundType, src: string, volume: number): void {

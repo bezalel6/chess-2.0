@@ -80,8 +80,8 @@ export const gameStore = {
 		const move = engine.move(from, to, promotion);
 
 		if (move) {
-			const moveNumber = Math.floor(history.length / 2) + 1;
 			const isWhiteMove = move.color === 'w';
+			const moveNumber = isWhiteMove ? history.length + 1 : history[history.length - 1]?.moveNumber || 1;
 
 			const moveWithMetadata: MoveWithMetadata = {
 				san: move.san,

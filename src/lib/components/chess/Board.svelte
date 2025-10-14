@@ -170,9 +170,8 @@
 <style>
 	.board-container {
 		position: relative;
-		width: 100%;
-		max-width: 600px;
-		margin: 0 auto;
+		width: 600px;
+		max-width: 100%;
 		border-radius: 0.5rem;
 		overflow: hidden;
 		box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);

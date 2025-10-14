@@ -67,10 +67,10 @@
 	.confirm-yes,
 	.confirm-no {
 		flex: 1;
-		padding: 0.5rem 0.75rem;
+		padding: 0;
 		border-radius: 0.375rem;
 		font-weight: 600;
-		font-size: 1.125rem;
+		font-size: inherit;
 		cursor: pointer;
 		transition: all 0.2s;
 		border: none;

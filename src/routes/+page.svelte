@@ -9,18 +9,6 @@
 	<title>Chess 2.0</title>
 </svelte:head>
 
-<style>
-	/* Constrain move history to board height */
-	.board-height-constraint {
-		max-height: calc(min(600px, 90vw));
-	}
-
-	@media (max-width: 1024px) {
-		.board-height-constraint {
-			max-height: none;
-		}
-	}
-</style>
 
 <div class="min-h-screen bg-[#1e1e1e]">
 	<header class="bg-[#2d2d2d] border-b border-[#404040]">
@@ -30,7 +18,7 @@
 	</header>
 
 	<main class="max-w-[1800px] mx-auto px-4 py-6">
-		<div class="flex flex-col lg:flex-row gap-6 items-start justify-center">
+		<div class="flex flex-col lg:flex-row gap-6 lg:items-center justify-center">
 			<!-- Left Sidebar: Controls and Turn Indicator -->
 			<div class="w-full lg:w-[280px] space-y-4 order-1 lg:order-1">
 				<!-- Turn Indicator -->
@@ -61,9 +49,7 @@
 
 			<!-- Right Sidebar: Move History -->
 			<div class="w-full lg:w-[280px] order-3 lg:order-3">
-				<div class="board-height-constraint">
-					<MoveHistory />
-				</div>
+				<MoveHistory />
 			</div>
 		</div>
 	</main>

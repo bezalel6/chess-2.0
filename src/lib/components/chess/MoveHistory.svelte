@@ -6,10 +6,10 @@
 </script>
 
 <div class="move-history">
-	<h3 class="text-xl font-bold mb-4 text-gray-900">Move History</h3>
+	<h3 class="title">Move History</h3>
 
 	{#if history.length === 0}
-		<p class="text-gray-500 italic">No moves yet</p>
+		<p class="empty-message">No moves yet</p>
 	{:else}
 		<div class="moves-list">
 			{#each history as entry, i (i)}
@@ -31,47 +31,51 @@
 	.move-history {
 		background-color: #2d2d2d;
 		border-radius: 0.5rem;
-		padding: 1.5rem;
+		padding: 1rem;
 		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 		border: 1px solid #404040;
-		height: 100%;
 		display: flex;
 		flex-direction: column;
-		overflow: hidden;
+		height: 280px;
 	}
 
-	.move-history h3 {
+	.title {
 		color: #e8e8e8;
+		font-size: 1.125rem;
+		font-weight: 600;
+		margin-bottom: 0.75rem;
 		flex-shrink: 0;
 	}
 
-	.move-history p {
+	.empty-message {
 		color: #a0a0a0;
+		font-size: 0.875rem;
+		font-style: italic;
 	}
 
 	.moves-list {
 		display: flex;
 		flex-direction: column;
-		gap: 0.5rem;
+		gap: 0.25rem;
 		overflow-y: auto;
 		overflow-x: hidden;
-		flex: 1;
 		padding-right: 0.5rem;
+		max-height: 200px;
 	}
 
 	/* Custom scrollbar styling */
 	.moves-list::-webkit-scrollbar {
-		width: 8px;
+		width: 6px;
 	}
 
 	.moves-list::-webkit-scrollbar-track {
 		background: #1e1e1e;
-		border-radius: 4px;
+		border-radius: 3px;
 	}
 
 	.moves-list::-webkit-scrollbar-thumb {
 		background: #4a9eff;
-		border-radius: 4px;
+		border-radius: 3px;
 	}
 
 	.moves-list::-webkit-scrollbar-thumb:hover {
@@ -81,8 +85,8 @@
 	.move-entry {
 		display: flex;
 		align-items: center;
-		gap: 1rem;
-		padding: 0.5rem;
+		gap: 0.5rem;
+		padding: 0.375rem 0.5rem;
 		border-radius: 0.25rem;
 		transition: background-color 0.2s;
 	}
@@ -94,15 +98,16 @@
 	.move-number {
 		font-weight: 600;
 		color: #a0a0a0;
-		min-width: 2rem;
+		min-width: 1.5rem;
+		font-size: 0.875rem;
 	}
 
 	.move {
 		padding: 0.25rem 0.5rem;
 		border-radius: 0.25rem;
 		font-family: monospace;
-		font-size: 1rem;
-		min-width: 4rem;
+		font-size: 0.875rem;
+		min-width: 3.5rem;
 		text-align: center;
 	}
 

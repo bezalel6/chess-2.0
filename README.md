@@ -28,7 +28,25 @@ Navigate to `http://localhost:5173`
 
 ```bash
 bun run build
-node build
+```
+
+Builds a static site in the `build/` directory for GitHub Pages deployment.
+
+## Deployment
+
+This project is configured for automatic deployment to GitHub Pages. Every push to the `master` branch triggers a GitHub Actions workflow that builds and deploys the site.
+
+**Live site**: https://bezalel6.github.io/chess-2.0/
+
+### Manual Deployment
+
+To manually trigger a deployment, go to the Actions tab in GitHub and run the "Deploy to GitHub Pages" workflow.
+
+### Local Preview
+
+```bash
+bun run build
+bun run preview
 ```
 
 ## Features
@@ -41,9 +59,12 @@ node build
 - Undo moves functionality
 - New game / reset board
 - FEN string import and export
+- Pawn promotion dialog with piece selection
+- Sound effects for moves, captures, checks, and game end
 - Legal move highlighting
 - Check, checkmate, and stalemate detection
 - Responsive design
+- Automatic deployment to GitHub Pages
 
 ## Notes
 
