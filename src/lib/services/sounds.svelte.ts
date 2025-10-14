@@ -1,6 +1,8 @@
 // Sound effects service for chess events
 // Uses HTML5 Audio API for simple, efficient sound playback
 
+import { browser } from '$app/environment';
+
 type SoundType = 'move' | 'capture' | 'check' | 'castle' | 'promote' | 'game-end';
 
 interface Sound {
@@ -11,8 +13,19 @@ interface Sound {
 class SoundService {
 	private sounds = new Map<SoundType, Sound>();
 	private enabled = $state(true);
+	private initialized = false;
 
 	constructor() {
+		// Only initialize in browser environment
+		if (browser) {
+			this.init();
+		}
+	}
+
+	private init(): void {
+		if (this.initialized) return;
+		this.initialized = true;
+
 		// Initialize sound files
 		// Using free chess sounds from lichess.org-style sources
 		this.loadSound('move', '/sounds/move.mp3', 0.5);
@@ -24,6 +37,8 @@ class SoundService {
 	}
 
 	private loadSound(type: SoundType, src: string, volume: number): void {
+		if (!browser) return;
+
 		const audio = new Audio();
 		audio.src = src;
 		audio.volume = volume;
@@ -38,7 +53,12 @@ class SoundService {
 	}
 
 	play(type: SoundType): void {
-		if (!this.enabled) return;
+		if (!browser || !this.enabled) return;
+
+		// Lazy init if needed
+		if (!this.initialized) {
+			this.init();
+		}
 
 		const sound = this.sounds.get(type);
 		if (!sound) return;
@@ -72,6 +92,8 @@ class SoundService {
 	}
 
 	setVolume(type: SoundType, volume: number): void {
+		if (!browser) return;
+
 		const sound = this.sounds.get(type);
 		if (sound) {
 			sound.volume = Math.max(0, Math.min(1, volume));
