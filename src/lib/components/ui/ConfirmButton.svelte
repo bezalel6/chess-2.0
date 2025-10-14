@@ -3,12 +3,10 @@
 
 	let {
 		onconfirm,
-		confirmText = 'Confirm?',
 		class: className = '',
 		children
 	}: {
 		onconfirm: () => void;
-		confirmText?: string;
 		class?: string;
 		children?: Snippet;
 	} = $props();
@@ -45,13 +43,12 @@
 {/if}
 
 <style>
-
+	/* Wrapper inherits parent button styles via className, then overrides specific properties */
 	.confirm-wrapper {
 		display: flex !important;
 		align-items: center;
 		justify-content: center;
 		gap: 0.75rem;
-		background-color: #2d2d2d !important;
 		border: 2px solid #facc15 !important;
 		animation: slideIn 0.2s ease-out;
 	}

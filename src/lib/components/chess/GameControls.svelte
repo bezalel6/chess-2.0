@@ -50,7 +50,6 @@
 <div class="game-controls">
 	<ConfirmButton
 		onconfirm={handleNewGame}
-		confirmText="Start new game?"
 		class="control-button new-game"
 	>
 		🔄 New Game
@@ -118,7 +117,8 @@
 		border: 1px solid #404040;
 	}
 
-	.control-button {
+	/* Use :global() to allow styles to penetrate child components like ConfirmButton */
+	.game-controls :global(.control-button) {
 		flex: 1;
 		min-width: 120px;
 		padding: 0.75rem 1.5rem;
@@ -132,38 +132,38 @@
 		transition: all 0.2s;
 	}
 
-	.control-button:hover:not(:disabled) {
+	.game-controls :global(.control-button:hover:not(:disabled)) {
 		background-color: #3d3d3d;
 		border-color: #4a9eff;
 		transform: translateY(-1px);
 	}
 
-	.control-button:active:not(:disabled) {
+	.game-controls :global(.control-button:active:not(:disabled)) {
 		transform: translateY(0);
 	}
 
-	.control-button:disabled {
+	.game-controls :global(.control-button:disabled) {
 		opacity: 0.3;
 		cursor: not-allowed;
 		color: #6b7280;
 	}
 
-	.control-button.undo:hover:not(:disabled) {
+	.game-controls :global(.control-button.undo:hover:not(:disabled)) {
 		border-color: #facc15;
 		color: #facc15;
 	}
 
-	.control-button.copy-fen:hover:not(:disabled) {
+	.game-controls :global(.control-button.copy-fen:hover:not(:disabled)) {
 		border-color: #4ade80;
 		color: #4ade80;
 	}
 
-	.control-button.load-fen:hover:not(:disabled) {
+	.game-controls :global(.control-button.load-fen:hover:not(:disabled)) {
 		border-color: #c084fc;
 		color: #c084fc;
 	}
 
-	.control-button.copied {
+	.game-controls :global(.control-button.copied) {
 		background-color: #4ade80;
 		color: #1e1e1e;
 		border-color: #4ade80;
