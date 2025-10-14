@@ -25,11 +25,29 @@
 	function handleBackdropClick() {
 		oncancel();
 	}
+
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape') {
+			oncancel();
+		}
+	}
 </script>
 
-<div class="promotion-backdrop" onclick={handleBackdropClick}>
-	<div class="promotion-dialog" onclick={(e) => e.stopPropagation()}>
-		<h3 class="promotion-title">Promote Pawn</h3>
+<svelte:window onkeydown={handleKeydown} />
+
+<div
+	class="promotion-backdrop"
+	onclick={handleBackdropClick}
+	role="presentation"
+>
+	<div
+		class="promotion-dialog"
+		onclick={(e) => e.stopPropagation()}
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="promotion-title"
+	>
+		<h3 id="promotion-title" class="promotion-title">Promote Pawn</h3>
 		<div class="promotion-grid">
 			{#each pieces as piece}
 				<button

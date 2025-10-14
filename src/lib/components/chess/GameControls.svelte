@@ -148,11 +148,6 @@
 		color: #6b7280;
 	}
 
-	.control-button.new-game:hover:not(:disabled) {
-		border-color: #4a9eff;
-		color: #4a9eff;
-	}
-
 	.control-button.undo:hover:not(:disabled) {
 		border-color: #facc15;
 		color: #facc15;
