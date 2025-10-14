@@ -31,26 +31,33 @@
 
 {#if confirming}
 	<div class="confirm-wrapper">
-		<span class="confirm-text">{confirmText}</span>
 		<button type="button" onclick={handleConfirm} class="confirm-yes">
-			✓ Yes
+			✓
 		</button>
 		<button type="button" onclick={handleCancel} class="confirm-no">
-			✗ No
+			✗
 		</button>
 	</div>
 {:else}
-	<button type="button" onclick={handleClick} class={className}>
+	<button type="button" onclick={handleClick} class="passthrough {className}">
 		{@render children?.()}
 	</button>
 {/if}
 
 <style>
+	/* Passthrough button - inherits all parent styles */
+	.passthrough {
+		all: inherit;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
 	.confirm-wrapper {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		gap: 0.5rem;
+		gap: 0.75rem;
 		flex: 1;
 		min-width: 120px;
 		padding: 0.5rem 1rem;
@@ -71,22 +78,17 @@
 		}
 	}
 
-	.confirm-text {
-		color: #facc15;
-		font-weight: 600;
-		font-size: 0.875rem;
-		white-space: nowrap;
-	}
-
 	.confirm-yes,
 	.confirm-no {
-		padding: 0.5rem 1rem;
+		flex: 1;
+		padding: 0.5rem 1.25rem;
 		border-radius: 0.375rem;
 		font-weight: 600;
-		font-size: 0.875rem;
+		font-size: 1.25rem;
 		cursor: pointer;
 		transition: all 0.2s;
 		border: none;
+		min-width: 0;
 	}
 
 	.confirm-yes {
