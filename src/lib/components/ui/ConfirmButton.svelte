@@ -40,12 +40,15 @@
 		</button>
 	</div>
 {:else}
-	<button onclick={handleClick} class={className}>
+	<button onclick={handleClick} class="idle-button {className}">
 		{@render children?.()}
 	</button>
 {/if}
 
 <style>
+	.idle-button {
+		color: inherit;
+	}
 	.confirm-wrapper {
 		display: flex;
 		align-items: center;
