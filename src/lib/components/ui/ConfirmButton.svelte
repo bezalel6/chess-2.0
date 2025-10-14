@@ -30,7 +30,7 @@
 </script>
 
 {#if confirming}
-	<div class="confirm-wrapper">
+	<div class="confirm-wrapper {className}">
 		<button type="button" onclick={handleConfirm} class="confirm-yes">
 			✓
 		</button>
@@ -39,31 +39,20 @@
 		</button>
 	</div>
 {:else}
-	<button type="button" onclick={handleClick} class="passthrough {className}">
+	<button type="button" onclick={handleClick} class={className}>
 		{@render children?.()}
 	</button>
 {/if}
 
 <style>
-	/* Passthrough button - inherits all parent styles */
-	.passthrough {
-		all: inherit;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-	}
 
 	.confirm-wrapper {
-		display: flex;
+		display: flex !important;
 		align-items: center;
 		justify-content: center;
 		gap: 0.75rem;
-		flex: 1;
-		min-width: 120px;
-		padding: 0.5rem 1rem;
-		background-color: #2d2d2d;
-		border: 2px solid #facc15;
-		border-radius: 0.5rem;
+		background-color: #2d2d2d !important;
+		border: 2px solid #facc15 !important;
 		animation: slideIn 0.2s ease-out;
 	}
 
@@ -81,10 +70,10 @@
 	.confirm-yes,
 	.confirm-no {
 		flex: 1;
-		padding: 0.5rem 1.25rem;
+		padding: 0.5rem 0.75rem;
 		border-radius: 0.375rem;
 		font-weight: 600;
-		font-size: 1.25rem;
+		font-size: 1.125rem;
 		cursor: pointer;
 		transition: all 0.2s;
 		border: none;
