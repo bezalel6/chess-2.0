@@ -44,26 +44,31 @@
 			}
 		});
 
-		// Sync chessground with game state changes
-		$effect(() => {
-			if (ground) {
-				ground.set({
-					fen: gameStore.fen,
-					turnColor: gameStore.turn === 'w' ? 'white' : 'black',
-					movable: {
-						color: gameStore.turn === 'w' ? 'white' : 'black',
-						dests: gameStore.legalMoves
-					},
-					check: gameStore.isCheck
-				});
-			}
-		});
-
 		return () => {
 			if (ground) {
 				ground.destroy();
 			}
 		};
+	});
+
+	// Sync chessground with game state changes (must be at top level for reactivity)
+	$effect(() => {
+		if (ground) {
+			const fen = gameStore.fen;
+			const turn = gameStore.turn;
+			const legalMoves = gameStore.legalMoves;
+			const isCheck = gameStore.isCheck;
+
+			ground.set({
+				fen,
+				turnColor: turn === 'w' ? 'white' : 'black',
+				movable: {
+					color: turn === 'w' ? 'white' : 'black',
+					dests: legalMoves
+				},
+				check: isCheck
+			});
+		}
 	});
 
 	function handleMove(from: string, to: string) {
