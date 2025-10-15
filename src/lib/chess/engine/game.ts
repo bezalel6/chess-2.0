@@ -35,13 +35,8 @@ export class GameEngine {
 	 * @returns Array of legal moves
 	 */
 	moves(options?: { square?: Square; verbose?: boolean }): Move[] | string[] {
-		if (options?.verbose) {
-			return this.chess.moves({ verbose: true });
-		}
-		if (options?.square) {
-			return this.chess.moves({ square: options.square });
-		}
-		return this.chess.moves();
+		// Pass all options to chess.js (supports both square and verbose together)
+		return this.chess.moves(options as any);
 	}
 
 	/**

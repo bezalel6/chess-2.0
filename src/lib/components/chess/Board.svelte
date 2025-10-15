@@ -3,6 +3,7 @@
 	import type { Api } from 'chessground/api';
 	import type { Color } from 'chessground/types';
 	import { gameStore } from '$lib/stores/game.svelte';
+	import { moveEvaluationsStore } from '$lib/stores/moveEvaluations.svelte';
 	import PromotionDialog from './PromotionDialog.svelte';
 	import type { PieceSymbol, Square } from '$lib/types/chess';
 	import { onMount } from 'svelte';
@@ -17,9 +18,13 @@
 	let promotionTo = $state<Square | null>(null);
 	let promotionColor = $state<'w' | 'b'>('w');
 
+	// Selected square for move evaluation
+	let selectedSquare = $state<Square | null>(null);
+
 	// Props
 	let {
-		orientation = 'white' as Color
+		orientation = 'white' as Color,
+		showEvaluations = false
 	} = $props();
 
 	onMount(() => {
@@ -49,8 +54,23 @@
 			animation: {
 				enabled: true,
 				duration: 200
+			},
+			events: {
+				select: (key) => {
+					// Hook into chessground's selection to show evaluations
+					if (showEvaluations) {
+						handleSquareSelect(key);
+					}
+				}
 			}
 		});
+
+		// Initialize move evaluations engine
+		if (showEvaluations) {
+			moveEvaluationsStore.initialize().catch((error) => {
+				console.error('Failed to initialize move evaluations:', error);
+			});
+		}
 
 		return () => {
 			if (ground) {
@@ -78,6 +98,7 @@
 			});
 		}
 	});
+
 
 	function handleMove(from: string, to: string) {
 		// Check if move is a pawn promotion
@@ -129,10 +150,103 @@
 		promotionFrom = null;
 		promotionTo = null;
 	}
+
+	async function handleSquareSelect(key: string | undefined) {
+		// If undefined is passed (deselection), clear evaluations
+		if (!key) {
+			selectedSquare = null;
+			moveEvaluationsStore.clear();
+			return;
+		}
+
+		// If clicking the same square again (deselecting), clear evaluations
+		if (key === selectedSquare) {
+			selectedSquare = null;
+			moveEvaluationsStore.clear();
+			return;
+		}
+
+		// Check if there's a piece on the selected square
+		const piece = gameStore.getEngine().getSquare(key as Square);
+
+		// Only evaluate if it's the current player's piece and it has legal moves
+		const legalMoves = gameStore.legalMoves.get(key as Square);
+
+		if (piece && piece.color === gameStore.turn && legalMoves && legalMoves.length > 0) {
+			selectedSquare = key as Square;
+			// Trigger evaluation for all moves from this square
+			await moveEvaluationsStore.evaluateMovesFromSquare(
+				key as Square,
+				gameStore.fen
+			);
+		} else {
+			// Clear evaluations if not a valid piece or no legal moves
+			selectedSquare = null;
+			moveEvaluationsStore.clear();
+		}
+	}
+
+	function formatEvaluation(cp: number | undefined, mate: number | undefined): string {
+		if (mate !== undefined) {
+			return mate > 0 ? `M${mate}` : `M${Math.abs(mate)}`;
+		}
+		if (cp === undefined) return '0.0';
+		const pawns = (cp / 100).toFixed(1);
+		return cp >= 0 ? `+${pawns}` : pawns;
+	}
+
+	function getEvaluationColor(cp: number | undefined, mate: number | undefined): string {
+		if (mate !== undefined) {
+			// Mate moves - bright colors
+			return mate > 0 ? '#4ade80' : '#f87171';
+		}
+		if (cp === undefined) cp = 0;
+
+		// Gradual color based on evaluation
+		if (cp >= 200) return '#4ade80'; // Very good - bright green
+		if (cp >= 100) return '#86efac'; // Good - green
+		if (cp >= 50) return '#bbf7d0'; // Slightly better - light green
+		if (cp >= -50) return '#9ca3af'; // Equal - gray
+		if (cp >= -100) return '#fecaca'; // Slightly worse - light red
+		if (cp >= -200) return '#fca5a5'; // Bad - red
+		return '#f87171'; // Very bad - bright red
+	}
+
+	function getSquarePosition(square: Square): { left: string; top: string } {
+		const file = square.charCodeAt(0) - 'a'.charCodeAt(0); // 0-7 (a-h)
+		const rank = parseInt(square[1]) - 1; // 0-7 (1-8)
+
+		// Calculate position as percentage (12.5% per square)
+		const leftPercent = orientation === 'white' ? file * 12.5 : (7 - file) * 12.5;
+		const topPercent = orientation === 'white' ? (7 - rank) * 12.5 : rank * 12.5;
+
+		return {
+			left: `${leftPercent}%`,
+			top: `${topPercent}%`
+		};
+	}
 </script>
 
 <div class="board-container">
 	<div bind:this={boardElement} class="chessground-board" data-turn={gameStore.turn}></div>
+
+	{#if showEvaluations && selectedSquare}
+		{#each Array.from(moveEvaluationsStore.evaluations.values()) as evalData}
+			{@const position = getSquarePosition(evalData.to)}
+			{@const evalText = formatEvaluation(evalData.evaluation, evalData.mate)}
+			{@const evalColor = getEvaluationColor(evalData.evaluation, evalData.mate)}
+			<div
+				class="eval-overlay"
+				style="left: {position.left}; top: {position.top};"
+			>
+				{#if evalData.isCalculating}
+					<span class="eval-spinner">⋯</span>
+				{:else}
+					<span class="eval-text" style="color: {evalColor};">{evalText}</span>
+				{/if}
+			</div>
+		{/each}
+	{/if}
 
 	{#if gameStore.isCheck && !gameStore.isCheckmate}
 		<div class="status-message check">
@@ -180,6 +294,48 @@
 	.chessground-board {
 		width: 100%;
 		aspect-ratio: 1;
+	}
+
+	.eval-overlay {
+		position: absolute;
+		width: 12.5%;
+		height: 12.5%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		pointer-events: none;
+		z-index: 5;
+		border-radius: 4px;
+	}
+
+	.eval-text {
+		font-size: 0.875rem;
+		font-weight: 800;
+		text-shadow:
+			0 0 3px rgba(0, 0, 0, 0.8),
+			0 0 6px rgba(0, 0, 0, 0.6),
+			1px 1px 2px rgba(0, 0, 0, 0.9);
+		user-select: none;
+		letter-spacing: -0.02em;
+	}
+
+	.eval-spinner {
+		color: #9ca3af;
+		font-size: 1rem;
+		font-weight: bold;
+		animation: pulse 1s ease-in-out infinite;
+		text-shadow:
+			0 0 3px rgba(0, 0, 0, 0.8),
+			0 0 6px rgba(0, 0, 0, 0.6);
+	}
+
+	@keyframes pulse {
+		0%, 100% {
+			opacity: 0.5;
+		}
+		50% {
+			opacity: 1;
+		}
 	}
 
 	.status-message {

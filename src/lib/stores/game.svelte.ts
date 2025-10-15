@@ -123,20 +123,41 @@ export const gameStore = {
 	},
 
 	playMoveSound(move: any, promotion?: string): void {
-		// Determine sound type based on move characteristics
+		// Play all applicable sounds (except move is mutually exclusive with check/game-end)
+		let hasSpecialSound = false;
+
+		// Game-end sound (checkmate) - highest priority, plays alone
 		if (engine.isCheckmate()) {
 			soundService.play('game-end');
-		} else if (engine.isCheck()) {
+			return;
+		}
+
+		// Check sound - mutually exclusive with move sound
+		if (engine.isCheck()) {
 			soundService.play('check');
-		} else if (promotion) {
+			hasSpecialSound = true;
+		}
+
+		// Promotion sound
+		if (promotion) {
 			soundService.play('promote');
-		} else if (move.flags?.includes('k') || move.flags?.includes('q')) {
-			// Castling (kingside or queenside)
+			hasSpecialSound = true;
+		}
+
+		// Castling sound (kingside or queenside)
+		if (move.flags?.includes('k') || move.flags?.includes('q')) {
 			soundService.play('castle');
-		} else if (move.captured || move.flags?.includes('c') || move.flags?.includes('e')) {
-			// Capture (including en passant)
+			hasSpecialSound = true;
+		}
+
+		// Capture sound (including en passant)
+		if (move.captured || move.flags?.includes('c') || move.flags?.includes('e')) {
 			soundService.play('capture');
-		} else {
+			hasSpecialSound = true;
+		}
+
+		// Play basic move sound only if no check and no special sounds
+		if (!hasSpecialSound && !engine.isCheck()) {
 			soundService.play('move');
 		}
 	},

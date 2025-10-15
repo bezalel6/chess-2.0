@@ -5,11 +5,16 @@
 	import AnalysisPanel from '$lib/components/chess/AnalysisPanel.svelte';
 	import { gameStore } from '$lib/stores/game.svelte';
 	import { analysisStore } from '$lib/stores/analysis.svelte';
+	import { moveEvaluationsStore } from '$lib/stores/moveEvaluations.svelte';
 	import { onDestroy } from 'svelte';
 
-	// Cleanup engine on component destroy
+	// Toggle for move evaluations
+	let showMoveEvaluations = $state(false);
+
+	// Cleanup engines on component destroy
 	onDestroy(() => {
 		analysisStore.cleanup();
+		moveEvaluationsStore.cleanup();
 	});
 </script>
 
@@ -44,11 +49,28 @@
 
 			<!-- Game Controls -->
 			<GameControls />
+
+			<!-- Move Evaluation Toggle -->
+			<div class="bg-[#2d2d2d] rounded-lg p-4 shadow-lg border border-[#404040]">
+				<label class="flex items-center justify-between cursor-pointer">
+					<span class="text-sm font-medium text-[#e8e8e8]">Show Move Evaluations</span>
+					<input
+						type="checkbox"
+						bind:checked={showMoveEvaluations}
+						class="w-5 h-5 text-[#4a9eff] bg-[#1e1e1e] border-[#505050] rounded
+							   focus:ring-2 focus:ring-[#4a9eff] focus:ring-offset-0
+							   focus:ring-offset-[#2d2d2d]"
+					/>
+				</label>
+				<p class="text-xs text-[#a0a0a0] mt-2">
+					Click a piece to see evaluations for all its moves
+				</p>
+			</div>
 		</div>
 
 		<!-- Center: Board -->
 		<div class="w-full lg:w-auto flex-shrink-0 order-2 lg:order-2">
-			<Board />
+			<Board showEvaluations={showMoveEvaluations} />
 		</div>
 
 		<!-- Right Sidebar: Move History and Analysis -->

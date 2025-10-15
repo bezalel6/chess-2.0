@@ -117,17 +117,20 @@
 		</div>
 
 		{#if result.pv && result.pv.length > 0}
-			<div class="principal-variation">
-				<div class="label text-[#a0a0a0] text-sm mb-2">Best Line</div>
-				<div class="moves flex flex-wrap gap-2">
-					{#each result.pv.slice(0, 10) as move, i}
-						<span class="move bg-[#3d3d3d] text-[#e8e8e8] px-2 py-1 rounded text-sm font-mono">
-							{#if i % 2 === 0}{Math.floor(i / 2) + 1}.{/if}
-							{move}
-						</span>
-					{/each}
+			{@const validMoves = result.pv.filter(move => /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(move))}
+			{#if validMoves.length > 0}
+				<div class="principal-variation">
+					<div class="label text-[#a0a0a0] text-sm mb-2">Best Line</div>
+					<div class="moves flex flex-wrap gap-2">
+						{#each validMoves.slice(0, 10) as move, i}
+							<span class="move bg-[#3d3d3d] text-[#e8e8e8] px-2 py-1 rounded text-sm font-mono">
+								{#if i % 2 === 0}{Math.floor(i / 2) + 1}.{/if}
+								{move}
+							</span>
+						{/each}
+					</div>
 				</div>
-			</div>
+			{/if}
 		{/if}
 	{:else if analysisStore.isAnalyzing}
 		<div class="analyzing flex flex-col items-center justify-center py-8 gap-3">

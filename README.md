@@ -51,20 +51,33 @@ bun run preview
 
 ## Features
 
+### Core Chess
 - Full chess rules implementation with chess.js
 - Interactive drag-and-drop board using chessground
 - Lichess.org blue board theme
+- Legal move highlighting and validation
+- Check, checkmate, and stalemate detection
+- Pawn promotion dialog with piece selection
+
+### Engine & Analysis
+- Stockfish 17.1 engine integration
+- Position analysis with evaluation bar
+- Move evaluation system (per-move analysis)
+- Principal variation display
+- Depth, nodes, and speed metrics
+
+### UI & UX
 - Dark mode UI with cohesive color palette
 - Real-time move history display
+- Enhanced sound system with simultaneous effects (capture + check, etc.)
+- Responsive design for mobile and desktop
 - Undo moves functionality
 - New game / reset board
 - FEN string import and export
-- Pawn promotion dialog with piece selection
-- Sound effects for moves, captures, checks, and game end
-- Legal move highlighting
-- Check, checkmate, and stalemate detection
-- Responsive design
+
+### Deployment
 - Automatic deployment to GitHub Pages
+- Static site generation with SvelteKit
 
 ## Notes
 
