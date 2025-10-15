@@ -35,7 +35,13 @@ export class GameEngine {
 	 * @returns Array of legal moves
 	 */
 	moves(options?: { square?: Square; verbose?: boolean }): Move[] | string[] {
-		return this.chess.moves(options);
+		if (options?.verbose) {
+			return this.chess.moves({ verbose: true });
+		}
+		if (options?.square) {
+			return this.chess.moves({ square: options.square });
+		}
+		return this.chess.moves();
 	}
 
 	/**
@@ -124,7 +130,8 @@ export class GameEngine {
 	 * @returns Piece object or null if empty
 	 */
 	getSquare(square: Square): { type: PieceSymbol; color: Color } | null {
-		return this.chess.get(square);
+		const piece = this.chess.get(square);
+		return piece || null;
 	}
 
 	/**
@@ -133,7 +140,10 @@ export class GameEngine {
 	 * @returns Array of moves in SAN or verbose format
 	 */
 	history(options?: { verbose?: boolean }): Move[] | string[] {
-		return this.chess.history(options);
+		if (options?.verbose) {
+			return this.chess.history({ verbose: true });
+		}
+		return this.chess.history({ verbose: false });
 	}
 
 	/**

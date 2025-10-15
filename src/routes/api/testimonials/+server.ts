@@ -11,7 +11,7 @@ const testimonials = [
 		author: "— Magnus, Endgame Enjoyer",
 	},
 	{
-		quote: "Literally don't care.",
+		quote: "I Literally don't care.",
 		author: "— Hikaru, Variety Streamer",
 	},
 	{

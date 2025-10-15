@@ -24,6 +24,27 @@
 		analysisStore.analyze(fen);
 	};
 
+	// Helper to determine if it's Black's turn from FEN
+	const isBlackToMove = (fen: string): boolean => {
+		const parts = fen.split(' ');
+		return parts[1] === 'b';
+	};
+
+	// Adjust evaluation to always be from White's perspective
+	const adjustedEval = (
+		cp: number | undefined,
+		mate: number | undefined,
+		fen: string
+	): { cp: number | undefined; mate: number | undefined } => {
+		if (isBlackToMove(fen)) {
+			return {
+				cp: cp !== undefined ? -cp : undefined,
+				mate: mate !== undefined ? -mate : undefined
+			};
+		}
+		return { cp, mate };
+	};
+
 	const stopAnalysis = () => {
 		analysisStore.stop();
 	};
@@ -65,7 +86,13 @@
 
 	{#if analysisStore.result}
 		{@const result = analysisStore.result}
-		{@const evalPercent = Math.max(0, Math.min(100, 50 + (result.evaluation || 0) / 10))}
+		{@const fen = gameStore.fen}
+		{@const adjusted = adjustedEval(result.evaluation, result.mate, fen)}
+		{@const evalPercent = adjusted.mate !== undefined
+			? adjusted.mate > 0
+				? 100
+				: 0
+			: Math.max(0, Math.min(100, 50 + (adjusted.cp || 0) / 10))}
 
 		<div class="evaluation-bar-container mb-4">
 			<div class="eval-bar-wrapper relative h-8 bg-[#1e1e1e] rounded overflow-hidden">
@@ -76,7 +103,7 @@
 				<div
 					class="eval-text absolute inset-0 flex items-center justify-center text-sm font-bold z-10 mix-blend-difference text-white"
 				>
-					{formatEvaluation(result.evaluation, result.mate)}
+					{formatEvaluation(adjusted.cp, adjusted.mate)}
 				</div>
 			</div>
 		</div>

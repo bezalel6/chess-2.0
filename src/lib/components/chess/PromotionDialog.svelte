@@ -61,6 +61,7 @@
 		bind:this={dialogElement}
 		class="promotion-dialog"
 		onclick={(e) => e.stopPropagation()}
+		onkeydown={(e) => e.stopPropagation()}
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="promotion-title"

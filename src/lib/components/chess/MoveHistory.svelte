@@ -5,7 +5,7 @@
 	let history = $derived(gameStore.history);
 
 	// Reference to the scrollable container
-	let movesListElement: HTMLDivElement;
+	let movesListElement = $state<HTMLDivElement>();
 
 	// Auto-scroll to bottom when history changes
 	$effect(() => {

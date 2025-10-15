@@ -13,7 +13,7 @@
 		<h1 class="text-5xl font-bold text-[#e8e8e8]">Chess 2.0</h1>
 
 		<p class="text-xl text-[#a0a0a0] max-w-2xl mx-auto">
-			The revolutionary masterpiece that obliterates the boundaries of traditional chess, shattering the confines of mere strategy and skill. Brace yourself for the unparalleled, mind-bending, galaxy-shaking sequel that humanity has been yearning for since the dawn of pawns and kings. This is not just chess—this is Chess 2.0, the game that will redefine your very existence.
+		
 		</p>
 
 		<div class="pt-8">
