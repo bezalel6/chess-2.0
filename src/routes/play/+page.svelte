@@ -2,7 +2,15 @@
 	import Board from '$lib/components/chess/Board.svelte';
 	import MoveHistory from '$lib/components/chess/MoveHistory.svelte';
 	import GameControls from '$lib/components/chess/GameControls.svelte';
+	import AnalysisPanel from '$lib/components/chess/AnalysisPanel.svelte';
 	import { gameStore } from '$lib/stores/game.svelte';
+	import { analysisStore } from '$lib/stores/analysis.svelte';
+	import { onDestroy } from 'svelte';
+
+	// Cleanup engine on component destroy
+	onDestroy(() => {
+		analysisStore.cleanup();
+	});
 </script>
 
 <svelte:head>
@@ -43,9 +51,10 @@
 			<Board />
 		</div>
 
-		<!-- Right Sidebar: Move History -->
-		<div class="w-full lg:w-[280px] order-3 lg:order-3">
+		<!-- Right Sidebar: Move History and Analysis -->
+		<div class="w-full lg:w-[280px] order-3 lg:order-3 space-y-4">
 			<MoveHistory />
+			<AnalysisPanel />
 		</div>
 	</div>
 </main>
