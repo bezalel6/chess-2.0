@@ -10,9 +10,10 @@ export class StockfishEngine {
 	async initialize(): Promise<void> {
 		return new Promise((resolve, reject) => {
 			try {
-				// Create worker from full Stockfish (single-threaded version for reliability)
-				// Note: Switched from lite version due to evaluation bugs
-				this.worker = new Worker('/stockfish-17.1-single-a496a04.js');
+				// Create worker from full Stockfish (multi-threaded version)
+				// Note: Single-threaded full version crashes with WASM errors
+				// Multi-threaded works with CORS headers set in hooks.server.ts
+				this.worker = new Worker('/stockfish-17.1-8e4d048.js');
 
 				this.worker.onmessage = (event: MessageEvent<string>) => {
 					const line = event.data;

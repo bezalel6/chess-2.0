@@ -8,11 +8,12 @@ This document describes the Stockfish chess engine integration added to Chess 2.
 
 ### Technology Stack
 
-- **Engine**: Stockfish 17.1 (Full NNUE Single-threaded variant)
-- **Bundle Size**: ~20MB (JavaScript + WASM parts)
+- **Engine**: Stockfish 17.1 (Full NNUE Multi-threaded variant)
+- **Bundle Size**: ~79MB (JavaScript + 6 WASM parts)
 - **Communication**: UCI Protocol via Web Workers
 - **Integration**: Client-side (no server required)
-- **Note**: Switched from lite to full version due to evaluation accuracy issues
+- **Threading**: Multi-threaded (requires CORS headers - set in hooks.server.ts)
+- **Note**: Multi-threaded version is most stable; single-threaded full crashes, lite has eval bugs
 
 ### Architecture
 
@@ -82,8 +83,8 @@ This document describes the Stockfish chess engine integration added to Chess 2.
 
 #### 6. Static Assets
 **Files**:
-- `static/stockfish-17.1-single-a496a04.js`: Stockfish engine JavaScript
-- `static/stockfish-17.1-single-a496a04-part-*.wasm`: Stockfish WASM binaries (6 parts, ~18MB total)
+- `static/stockfish-17.1-8e4d048.js`: Stockfish engine JavaScript
+- `static/stockfish-17.1-8e4d048-part-*.wasm`: Stockfish WASM binaries (6 parts, ~78MB total)
 
 ### Configuration Changes
 
@@ -129,9 +130,9 @@ This document describes the Stockfish chess engine integration added to Chess 2.
 
 Default settings:
 - **Depth**: 20 (good balance of speed/strength)
-- **Threads**: Up to 4 threads (auto-detected, capped at 4 for optimal performance)
+- **Threads**: 1-4 threads (configurable, multi-threaded version supports threading)
 - **Hash**: 128MB (memory for position caching)
-- **Multi-threading**: Enabled via SharedArrayBuffer
+- **Multi-threading**: Enabled via SharedArrayBuffer (CORS headers required)
 
 ## Usage
 
@@ -169,10 +170,11 @@ Default settings:
 ### Bundle Impact
 
 - **Initial load**: +32KB (JavaScript wrapper)
-- **WASM download**: +6.8MB (on first use)
-- **Total**: ~7MB additional download
+- **WASM download**: +78MB (6 parts, loaded on first use)
+- **Total**: ~79MB additional download
 
-The WASM file is loaded lazily when the worker is created, not on page load.
+The WASM files are loaded lazily when the worker is created, not on page load.
+Note: Multi-threaded version is larger but most stable and accurate.
 
 ## Future Enhancements
 
@@ -201,6 +203,7 @@ Potential improvements for v2:
 ### Slow Analysis
 
 - **Reduce depth**: Lower from 20 to 15 or 12
+- **Reduce threads**: Lower thread count if system is struggling
 - **Check CPU**: Analysis is CPU-intensive
 - **Close tabs**: Free up system resources
 
@@ -252,8 +255,11 @@ worker.onmessage = (event) => {
 
 - **Stockfish Engine**: https://stockfishchess.org/
 - **npm Package**: https://github.com/nmrugg/stockfish.js (Chess.com)
-- **Version**: Stockfish 17.1 (Full NNUE Single-threaded)
-- **Note**: Lite version had evaluation bugs showing incorrect signs for hanging pieces
+- **Version**: Stockfish 17.1 (Full NNUE Multi-threaded)
+- **Note**:
+  - Lite version has evaluation bugs (wrong signs/values)
+  - Single-threaded full version crashes with WASM errors
+  - Multi-threaded full version is most stable (requires CORS headers)
 
 ## License
 
