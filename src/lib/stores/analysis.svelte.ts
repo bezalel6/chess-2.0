@@ -33,7 +33,10 @@ class AnalysisStore {
 		try {
 			this.engine = new StockfishEngine({
 				depth: 20,
-				threads: typeof navigator !== 'undefined' ? navigator.hardwareConcurrency || 2 : 2,
+				// Multi-threaded lite version supports up to 4 threads
+				threads: typeof navigator !== 'undefined'
+					? Math.min(navigator.hardwareConcurrency || 2, 4)
+					: 2,
 				hash: 128 // 128MB hash table
 			});
 			await this.engine.initialize();

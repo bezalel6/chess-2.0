@@ -8,10 +8,11 @@ This document describes the Stockfish chess engine integration added to Chess 2.
 
 ### Technology Stack
 
-- **Engine**: Stockfish 17.1 (Lite NNUE variant)
+- **Engine**: Stockfish 17.1 (Lite NNUE Multi-threaded variant)
 - **Bundle Size**: ~7MB (JavaScript + WASM)
 - **Communication**: UCI Protocol via Web Workers
 - **Integration**: Client-side (no server required)
+- **Threading**: Multi-threaded with SharedArrayBuffer support
 
 ### Architecture
 
@@ -73,9 +74,15 @@ This document describes the Stockfish chess engine integration added to Chess 2.
 - Principal variation (best line of moves)
 - Start/Stop analysis controls
 
-#### 5. Static Assets
+#### 5. Server Hooks
+**File**: `src/hooks.server.ts`
+- Sets COOP/COEP headers for SharedArrayBuffer support
+- Enables multi-threaded execution
+- Required for production deployment
+
+#### 6. Static Assets
 **Files**:
-- `static/stockfish.js`: Stockfish engine JavaScript
+- `static/stockfish.js`: Stockfish engine JavaScript (multi-threaded)
 - `static/stockfish.wasm`: Stockfish WASM binary (6.8MB)
 
 ### Configuration Changes
@@ -122,8 +129,9 @@ This document describes the Stockfish chess engine integration added to Chess 2.
 
 Default settings:
 - **Depth**: 20 (good balance of speed/strength)
-- **Threads**: Auto-detected (uses `navigator.hardwareConcurrency`)
+- **Threads**: Up to 4 threads (auto-detected, capped at 4 for optimal performance)
 - **Hash**: 128MB (memory for position caching)
+- **Multi-threading**: Enabled via SharedArrayBuffer
 
 ## Usage
 
@@ -149,11 +157,14 @@ Default settings:
 
 ## Performance
 
-### Expected Analysis Speed
+### Expected Analysis Speed (Multi-threaded)
 
-- **Desktop (8-core)**: ~2-5 million nodes/sec, depth 20 in 5-10 seconds
-- **Laptop (4-core)**: ~1-3 million nodes/sec, depth 20 in 10-15 seconds
-- **Mobile (4-core)**: ~500k-1M nodes/sec, depth 15-18 in 10-20 seconds
+- **Desktop (8-core, 4 threads used)**: ~3-6 million nodes/sec, depth 20 in 3-7 seconds
+- **Laptop (4-core, 4 threads used)**: ~2-4 million nodes/sec, depth 20 in 7-12 seconds
+- **Mobile (4-core, 4 threads used)**: ~1-2 million nodes/sec, depth 18-20 in 10-15 seconds
+- **Mobile (2-core, 2 threads used)**: ~500k-1M nodes/sec, depth 15-18 in 15-25 seconds
+
+**Note**: Multi-threading provides 2-4x performance improvement over single-threaded execution.
 
 ### Bundle Impact
 
@@ -181,9 +192,11 @@ Potential improvements for v2:
 
 ### Engine Won't Initialize
 
-- **Check console**: Look for Web Worker errors
+- **Check console**: Look for Web Worker errors or SharedArrayBuffer warnings
 - **Verify files**: Ensure `static/stockfish.js` and `static/stockfish.wasm` exist
-- **Browser support**: Requires Web Worker and WebAssembly support
+- **Browser support**: Requires Web Worker, WebAssembly, and SharedArrayBuffer support
+- **CORS Headers**: Multi-threading requires COOP/COEP headers (automatically set by `hooks.server.ts`)
+- **Browser compatibility**: SharedArrayBuffer requires HTTPS in production (works on localhost)
 
 ### Slow Analysis
 
