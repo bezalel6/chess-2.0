@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* Global styles */
+body {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
 /* Chessground styles - MUST BE IN THIS ORDER */
 /* 1. Base CSS (structure) */
 @import "chessground/assets/chessground.base.css";
@@ -66,18 +74,22 @@ cg-board square.current-premove {
   color: rgba(232, 232, 232, 0.6);
 }
 
-/* Testimonials scrolling animation */
+/* Testimonials scrolling animation with GPU acceleration */
 @keyframes scroll-vertical {
   0% {
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
   100% {
-    transform: translateY(-50%);
+    transform: translate3d(0, -50%, 0);
   }
 }
 
 .animate-scroll-vertical {
   animation: scroll-vertical 40s linear infinite;
+  will-change: transform;
+  /* Force GPU acceleration and prevent subpixel rendering issues */
+  backface-visibility: hidden;
+  perspective: 1000px;
 }
 
 /* .animate-scroll-vertical:hover {

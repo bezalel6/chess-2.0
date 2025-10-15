@@ -10,11 +10,10 @@
 
 <main class="max-w-4xl mx-auto px-4 py-16">
 	<div class="text-center space-y-8">
-		<h1 class="text-5xl font-bold text-[#e8e8e8]">Welcome to Chess 2.0</h1>
+		<h1 class="text-5xl font-bold text-[#e8e8e8]">Chess 2.0</h1>
 
 		<p class="text-xl text-[#a0a0a0] max-w-2xl mx-auto">
-			A modern chess experience built with SvelteKit, featuring an interactive board,
-			move validation, and full game controls.
+			The revolutionary masterpiece that obliterates the boundaries of traditional chess, shattering the confines of mere strategy and skill. Brace yourself for the unparalleled, mind-bending, galaxy-shaking sequel that humanity has been yearning for since the dawn of pawns and kings. This is not just chess—this is Chess 2.0, the game that will redefine your very existence.
 		</p>
 
 		<div class="pt-8">

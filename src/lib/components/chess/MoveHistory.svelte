@@ -3,6 +3,16 @@
 
 	// Get history from store
 	let history = $derived(gameStore.history);
+
+	// Reference to the scrollable container
+	let movesListElement: HTMLDivElement;
+
+	// Auto-scroll to bottom when history changes
+	$effect(() => {
+		if (movesListElement && history.length > 0) {
+			movesListElement.scrollTop = movesListElement.scrollHeight;
+		}
+	});
 </script>
 
 <div class="move-history">
@@ -11,7 +21,7 @@
 	{#if history.length === 0}
 		<p class="empty-message">No moves yet</p>
 	{:else}
-		<div class="moves-list">
+		<div class="moves-list" bind:this={movesListElement}>
 			{#each history as entry, i (i)}
 				<div class="move-entry">
 					<span class="move-number">{entry.moveNumber}.</span>
