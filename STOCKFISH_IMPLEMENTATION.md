@@ -8,11 +8,11 @@ This document describes the Stockfish chess engine integration added to Chess 2.
 
 ### Technology Stack
 
-- **Engine**: Stockfish 17.1 (Lite NNUE Multi-threaded variant)
-- **Bundle Size**: ~7MB (JavaScript + WASM)
+- **Engine**: Stockfish 17.1 (Full NNUE Single-threaded variant)
+- **Bundle Size**: ~20MB (JavaScript + WASM parts)
 - **Communication**: UCI Protocol via Web Workers
 - **Integration**: Client-side (no server required)
-- **Threading**: Multi-threaded with SharedArrayBuffer support
+- **Note**: Switched from lite to full version due to evaluation accuracy issues
 
 ### Architecture
 
@@ -82,8 +82,8 @@ This document describes the Stockfish chess engine integration added to Chess 2.
 
 #### 6. Static Assets
 **Files**:
-- `static/stockfish.js`: Stockfish engine JavaScript (multi-threaded)
-- `static/stockfish.wasm`: Stockfish WASM binary (6.8MB)
+- `static/stockfish-17.1-single-a496a04.js`: Stockfish engine JavaScript
+- `static/stockfish-17.1-single-a496a04-part-*.wasm`: Stockfish WASM binaries (6 parts, ~18MB total)
 
 ### Configuration Changes
 
@@ -252,7 +252,8 @@ worker.onmessage = (event) => {
 
 - **Stockfish Engine**: https://stockfishchess.org/
 - **npm Package**: https://github.com/nmrugg/stockfish.js (Chess.com)
-- **Version**: Stockfish 17.1 (Lite NNUE)
+- **Version**: Stockfish 17.1 (Full NNUE Single-threaded)
+- **Note**: Lite version had evaluation bugs showing incorrect signs for hanging pieces
 
 ## License
 

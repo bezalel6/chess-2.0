@@ -10,8 +10,9 @@ export class StockfishEngine {
 	async initialize(): Promise<void> {
 		return new Promise((resolve, reject) => {
 			try {
-				// Create worker from multithreaded lite stockfish file
-				this.worker = new Worker('/stockfish-17.1-lite-51f59da.js');
+				// Create worker from full Stockfish (single-threaded version for reliability)
+				// Note: Switched from lite version due to evaluation bugs
+				this.worker = new Worker('/stockfish-17.1-single-a496a04.js');
 
 				this.worker.onmessage = (event: MessageEvent<string>) => {
 					const line = event.data;
