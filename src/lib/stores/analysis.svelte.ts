@@ -75,6 +75,10 @@ class AnalysisStore {
 		this.state.isAnalyzing = false;
 	}
 
+	clear() {
+		this.state.result = null;
+	}
+
 	cleanup() {
 		this.engine?.quit();
 		this.engine = null;

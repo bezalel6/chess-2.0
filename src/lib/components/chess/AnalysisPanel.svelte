@@ -5,7 +5,7 @@
 
 	const formatEvaluation = (cp: number | undefined, mate: number | undefined): string => {
 		if (mate !== undefined) {
-			return mate > 0 ? `+M${mate}` : `-M${Math.abs(mate)}`;
+			return mate > 0 ? `+M${mate}` : `M${Math.abs(mate)}`;
 		}
 		if (cp === undefined) return '0.00';
 		const pawns = (cp / 100).toFixed(2);
@@ -24,29 +24,12 @@
 		analysisStore.analyze(fen);
 	};
 
-	// Helper to determine if it's Black's turn from FEN
-	const isBlackToMove = (fen: string): boolean => {
-		const parts = fen.split(' ');
-		return parts[1] === 'b';
-	};
-
-	// Adjust evaluation to always be from White's perspective
-	const adjustedEval = (
-		cp: number | undefined,
-		mate: number | undefined,
-		fen: string
-	): { cp: number | undefined; mate: number | undefined } => {
-		if (isBlackToMove(fen)) {
-			return {
-				cp: cp !== undefined ? -cp : undefined,
-				mate: mate !== undefined ? -mate : undefined
-			};
-		}
-		return { cp, mate };
-	};
-
 	const stopAnalysis = () => {
 		analysisStore.stop();
+	};
+
+	const isWhiteToMove = (fen: string): boolean => {
+		return fen.split(' ')[1] === 'w';
 	};
 
 	// Initialize engine on mount
@@ -86,13 +69,14 @@
 
 	{#if analysisStore.result}
 		{@const result = analysisStore.result}
-		{@const fen = gameStore.fen}
-		{@const adjusted = adjustedEval(result.evaluation, result.mate, fen)}
-		{@const evalPercent = adjusted.mate !== undefined
-			? adjusted.mate > 0
+		{@const whiteToMove = isWhiteToMove(gameStore.fen)}
+		{@const whiteEval = whiteToMove ? result.evaluation : -result.evaluation}
+		{@const whiteMate = whiteToMove ? result.mate : result.mate ? -result.mate : undefined}
+		{@const evalPercent = whiteMate !== undefined
+			? whiteMate > 0
 				? 100
 				: 0
-			: Math.max(0, Math.min(100, 50 + (adjusted.cp || 0) / 10))}
+			: Math.max(0, Math.min(100, 50 + whiteEval / 10))}
 
 		<div class="evaluation-bar-container mb-4">
 			<div class="eval-bar-wrapper relative h-8 bg-[#1e1e1e] rounded overflow-hidden">
@@ -103,7 +87,7 @@
 				<div
 					class="eval-text absolute inset-0 flex items-center justify-center text-sm font-bold z-10 mix-blend-difference text-white"
 				>
-					{formatEvaluation(adjusted.cp, adjusted.mate)}
+					{formatEvaluation(whiteEval, whiteMate)}
 				</div>
 			</div>
 		</div>
