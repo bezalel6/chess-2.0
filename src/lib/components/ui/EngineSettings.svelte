@@ -7,6 +7,7 @@
 	let depth = $state(engineConfigStore.depth);
 	let threads = $state(engineConfigStore.threads);
 	let hash = $state(engineConfigStore.hash);
+	let parallelMoveEval = $state(engineConfigStore.parallelMoveEval);
 
 	const maxThreads = typeof navigator !== 'undefined' ? navigator.hardwareConcurrency || 2 : 2;
 
@@ -14,6 +15,7 @@
 		engineConfigStore.setDepth(depth);
 		engineConfigStore.setThreads(threads);
 		engineConfigStore.setHash(hash);
+		engineConfigStore.setParallelMoveEval(parallelMoveEval);
 		isOpen = false;
 	}
 
@@ -22,6 +24,7 @@
 		depth = engineConfigStore.depth;
 		threads = engineConfigStore.threads;
 		hash = engineConfigStore.hash;
+		parallelMoveEval = engineConfigStore.parallelMoveEval;
 	}
 
 	function handleCancel() {
@@ -29,6 +32,7 @@
 		depth = engineConfigStore.depth;
 		threads = engineConfigStore.threads;
 		hash = engineConfigStore.hash;
+		parallelMoveEval = engineConfigStore.parallelMoveEval;
 		isOpen = false;
 	}
 
@@ -44,6 +48,7 @@
 		depth = engineConfigStore.depth;
 		threads = engineConfigStore.threads;
 		hash = engineConfigStore.hash;
+		parallelMoveEval = engineConfigStore.parallelMoveEval;
 	});
 </script>
 
@@ -120,6 +125,33 @@
 					<p class="text-xs text-[#a0a0a0] mt-1">
 						Memory for position cache (16-512 MB)
 					</p>
+				</div>
+
+				<!-- Move Evaluation Mode -->
+				<div>
+					<label class="flex items-center justify-between cursor-pointer">
+						<div>
+							<div class="text-sm font-medium text-[#e8e8e8]">
+								Parallel Move Evaluation
+							</div>
+							<p class="text-xs text-[#a0a0a0] mt-1">
+								{parallelMoveEval
+									? 'Analyze all moves simultaneously (faster, but may overwhelm engine)'
+									: 'Analyze moves one at a time (sequential, easier to follow)'}
+							</p>
+						</div>
+						<div class="relative">
+							<input
+								id="parallelMoveEval"
+								type="checkbox"
+								bind:checked={parallelMoveEval}
+								class="sr-only peer"
+							/>
+							<div
+								class="w-11 h-6 bg-[#3d3d3d] peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#4a9eff] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4a9eff]"
+							></div>
+						</div>
+					</label>
 				</div>
 
 				<!-- Info Box -->

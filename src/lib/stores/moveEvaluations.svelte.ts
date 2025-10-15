@@ -81,6 +81,93 @@ class MoveEvaluationsStore {
 	}
 
 	/**
+	 * Evaluate a single move
+	 */
+	private async evaluateSingleMove(move: any, currentGeneration: number, isWhiteToMove: boolean) {
+		const key = this.getMoveKey(move.from, move.to);
+
+		try {
+			// Use the 'after' field from verbose move to get resulting position
+			const resultingFen = move.after;
+
+			console.log(`\n📊 Evaluating move ${move.from}→${move.to}`);
+			console.log(`  Resulting FEN: ${resultingFen}`);
+
+			// Analyze the resulting position
+			const result = await this.engine!.analyze(resultingFen);
+
+			console.log(`  Raw Stockfish result:`, {
+				evaluation: result.evaluation,
+				mate: result.mate,
+				depth: result.depth,
+				bestMove: result.bestMove
+			});
+
+			// Check if this evaluation is still valid (not cancelled)
+			if (currentGeneration !== this.evaluationGeneration) {
+				// This evaluation was cancelled, discard results
+				console.log(`  ❌ CANCELLED (generation mismatch: ${currentGeneration} !== ${this.evaluationGeneration})`);
+				return;
+			}
+
+			// Stockfish returns evaluations from WHITE's perspective (UCI standard)
+			// Positive = good for white, Negative = good for black
+			// We need to show from the CURRENT PLAYER's perspective:
+			// - If WHITE is moving: keep as-is (positive = good for white = good for player)
+			// - If BLACK is moving: negate (positive for white = bad for black, so negate to show as negative = bad for player)
+			let evaluation: number;
+			let mate: number | undefined;
+
+			if (result.mate !== undefined) {
+				// Mate score
+				mate = isWhiteToMove ? result.mate : -result.mate;
+				evaluation = mate;
+			} else {
+				// Centipawn evaluation
+				evaluation = isWhiteToMove ? result.evaluation : -result.evaluation;
+				mate = undefined;
+			}
+
+			console.log(`  Transformed evaluation:`, {
+				rawEval: result.evaluation,
+				rawMate: result.mate,
+				finalEval: evaluation,
+				finalMate: mate,
+				depth: result.depth,
+				perspective: isWhiteToMove ? 'WHITE (no negate)' : 'BLACK (negated)'
+			});
+
+			// Update evaluation
+			this.state.evaluations.set(key, {
+				from: move.from,
+				to: move.to,
+				evaluation,
+				mate,
+				depth: result.depth,
+				isCalculating: false
+			});
+
+			// Force reactivity
+			this.state.evaluations = new Map(this.state.evaluations);
+		} catch (error) {
+			// Check if this evaluation is still valid
+			if (currentGeneration !== this.evaluationGeneration) {
+				return;
+			}
+
+			console.error(`Failed to evaluate move ${move.from}-${move.to}:`, error);
+			this.state.evaluations.set(key, {
+				from: move.from,
+				to: move.to,
+				evaluation: 0,
+				depth: 0,
+				isCalculating: false
+			});
+			this.state.evaluations = new Map(this.state.evaluations);
+		}
+	}
+
+	/**
 	 * Evaluate all legal moves from a specific square using chess.js patterns
 	 */
 	async evaluateMovesFromSquare(square: Square, currentFen: string) {
@@ -143,93 +230,27 @@ class MoveEvaluationsStore {
 			// Force reactivity update
 			this.state.evaluations = new Map(this.state.evaluations);
 
-			// Evaluate each move in parallel
-			const evaluationPromises = legalMoves.map(async (move: any) => {
-				const key = this.getMoveKey(move.from, move.to);
+			// Check if parallel or sequential mode
+			const isParallel = engineConfigStore.parallelMoveEval;
+			console.log(`🎯 Evaluation mode: ${isParallel ? 'PARALLEL' : 'SEQUENTIAL'}`);
 
-				try {
-					// Use the 'after' field from verbose move to get resulting position
-					const resultingFen = move.after;
-
-					console.log(`\n📊 Evaluating move ${move.from}→${move.to}`);
-					console.log(`  Resulting FEN: ${resultingFen}`);
-
-					// Analyze the resulting position
-					const result = await this.engine!.analyze(resultingFen);
-
-					console.log(`  Raw Stockfish result:`, {
-						evaluation: result.evaluation,
-						mate: result.mate,
-						depth: result.depth,
-						bestMove: result.bestMove
-					});
-
-					// Check if this evaluation is still valid (not cancelled)
+			if (isParallel) {
+				// PARALLEL MODE: Evaluate all moves at once
+				const evaluationPromises = legalMoves.map(async (move: any) => {
+					return this.evaluateSingleMove(move, currentGeneration, isWhiteToMove);
+				});
+				await Promise.all(evaluationPromises);
+			} else {
+				// SEQUENTIAL MODE: Evaluate one move at a time
+				for (const move of legalMoves) {
+					// Check if we should stop (generation changed)
 					if (currentGeneration !== this.evaluationGeneration) {
-						// This evaluation was cancelled, discard results
-						console.log(`  ❌ CANCELLED (generation mismatch: ${currentGeneration} !== ${this.evaluationGeneration})`);
-						return;
+						console.log(`⏹️ Sequential evaluation stopped (generation changed)`);
+						break;
 					}
-
-					// Stockfish returns evaluations from WHITE's perspective (UCI standard)
-					// Positive = good for white, Negative = good for black
-					// We need to show from the CURRENT PLAYER's perspective:
-					// - If WHITE is moving: keep as-is (positive = good for white = good for player)
-					// - If BLACK is moving: negate (positive for white = bad for black, so negate to show as negative = bad for player)
-					let evaluation: number;
-					let mate: number | undefined;
-
-					if (result.mate !== undefined) {
-						// Mate score
-						mate = isWhiteToMove ? result.mate : -result.mate;
-						evaluation = mate;
-					} else {
-						// Centipawn evaluation
-						evaluation = isWhiteToMove ? result.evaluation : -result.evaluation;
-						mate = undefined;
-					}
-
-					console.log(`  Transformed evaluation:`, {
-						rawEval: result.evaluation,
-						rawMate: result.mate,
-						finalEval: evaluation,
-						finalMate: mate,
-						depth: result.depth,
-						perspective: isWhiteToMove ? 'WHITE (no negate)' : 'BLACK (negated)'
-					});
-
-					// Update evaluation
-					this.state.evaluations.set(key, {
-						from: move.from,
-						to: move.to,
-						evaluation,
-						mate,
-						depth: result.depth,
-						isCalculating: false
-					});
-
-					// Force reactivity
-					this.state.evaluations = new Map(this.state.evaluations);
-				} catch (error) {
-					// Check if this evaluation is still valid
-					if (currentGeneration !== this.evaluationGeneration) {
-						return;
-					}
-
-					console.error(`Failed to evaluate move ${move.from}-${move.to}:`, error);
-					this.state.evaluations.set(key, {
-						from: move.from,
-						to: move.to,
-						evaluation: 0,
-						depth: 0,
-						isCalculating: false
-					});
-					this.state.evaluations = new Map(this.state.evaluations);
+					await this.evaluateSingleMove(move, currentGeneration, isWhiteToMove);
 				}
-			});
-
-			// Wait for all evaluations to complete
-			await Promise.all(evaluationPromises);
+			}
 
 			// Print final results table
 			const finalResults = Array.from(this.state.evaluations.values()).map(e => ({

@@ -2,6 +2,7 @@ import type { EngineConfig } from '$lib/types/stockfish';
 
 interface EngineConfigState extends EngineConfig {
 	version: number; // Version counter to trigger reactivity
+	parallelMoveEval: boolean; // Parallel or sequential move evaluation
 }
 
 class EngineConfigStore {
@@ -10,6 +11,7 @@ class EngineConfigStore {
 		threads:
 			typeof navigator !== 'undefined' ? Math.min(navigator.hardwareConcurrency || 2, 4) : 2,
 		hash: 128,
+		parallelMoveEval: false, // Default to sequential (one square at a time)
 		version: 0
 	});
 
@@ -27,6 +29,10 @@ class EngineConfigStore {
 
 	get version() {
 		return this.state.version;
+	}
+
+	get parallelMoveEval() {
+		return this.state.parallelMoveEval;
 	}
 
 	get config(): EngineConfig {
@@ -63,11 +69,17 @@ class EngineConfigStore {
 		}
 	}
 
+	setParallelMoveEval(enabled: boolean) {
+		this.state.parallelMoveEval = enabled;
+		this.saveToLocalStorage();
+	}
+
 	resetToDefaults() {
 		this.state.depth = 20;
 		this.state.threads =
 			typeof navigator !== 'undefined' ? Math.min(navigator.hardwareConcurrency || 2, 4) : 2;
 		this.state.hash = 128;
+		this.state.parallelMoveEval = false;
 		this.state.version++;
 		this.saveToLocalStorage();
 	}
@@ -79,7 +91,8 @@ class EngineConfigStore {
 				JSON.stringify({
 					depth: this.state.depth,
 					threads: this.state.threads,
-					hash: this.state.hash
+					hash: this.state.hash,
+					parallelMoveEval: this.state.parallelMoveEval
 				})
 			);
 		}
@@ -94,6 +107,7 @@ class EngineConfigStore {
 					if (config.depth) this.state.depth = config.depth;
 					if (config.threads) this.state.threads = config.threads;
 					if (config.hash) this.state.hash = config.hash;
+					if (config.parallelMoveEval !== undefined) this.state.parallelMoveEval = config.parallelMoveEval;
 					this.state.version++;
 				} catch (error) {
 					console.error('Failed to load engine config from localStorage:', error);
