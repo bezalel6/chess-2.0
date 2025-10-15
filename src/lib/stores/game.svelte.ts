@@ -9,7 +9,6 @@ import type {
 	Square
 } from '$lib/types/chess';
 import { analysisStore } from './analysis.svelte';
-import { moveEvaluationsStore } from './moveEvaluations.svelte';
 
 // Reactive state - using $state directly for proper Svelte 5 reactivity
 let engine = $state(new GameEngine());
@@ -82,9 +81,8 @@ export const gameStore = {
 		const move = engine.move(from, to, promotion);
 
 		if (move) {
-			// Clear analysis and move evaluations on new move
+			// Clear analysis on new move
 			analysisStore.clear();
-			moveEvaluationsStore.clear();
 
 			const isWhiteMove = move.color === 'w';
 			const moveNumber = isWhiteMove ? history.length + 1 : history[history.length - 1]?.moveNumber || 1;
