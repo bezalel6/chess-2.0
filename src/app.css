@@ -74,6 +74,24 @@ cg-board square.current-premove {
   color: rgba(232, 232, 232, 0.6);
 }
 
+/* Cursor styles for interactive pieces */
+/* Override default board cursor - board itself should not show pointer */
+.cg-wrap.manipulable cg-board {
+  cursor: default;
+}
+
+/* Enable pointer events and show pointer cursor for pieces that belong to the current player */
+[data-turn="w"] piece.white,
+[data-turn="b"] piece.black {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* Show grabbing cursor when actively dragging */
+cg-board piece.dragging {
+  cursor: grabbing !important;
+}
+
 /* Testimonials scrolling animation with GPU acceleration */
 @keyframes scroll-vertical {
   0% {

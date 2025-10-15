@@ -132,7 +132,7 @@
 </script>
 
 <div class="board-container">
-	<div bind:this={boardElement} class="chessground-board"></div>
+	<div bind:this={boardElement} class="chessground-board" data-turn={gameStore.turn}></div>
 
 	{#if gameStore.isCheck && !gameStore.isCheckmate}
 		<div class="status-message check">
