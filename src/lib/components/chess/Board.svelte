@@ -317,6 +317,7 @@
 			1px 1px 2px rgba(0, 0, 0, 0.9);
 		user-select: none;
 		letter-spacing: -0.02em;
+		pointer-events: none;
 	}
 
 	.eval-spinner {
@@ -327,6 +328,7 @@
 		text-shadow:
 			0 0 3px rgba(0, 0, 0, 0.8),
 			0 0 6px rgba(0, 0, 0, 0.6);
+		pointer-events: none;
 	}
 
 	@keyframes pulse {

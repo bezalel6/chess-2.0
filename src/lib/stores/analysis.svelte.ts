@@ -1,4 +1,5 @@
 import { StockfishEngine } from '$lib/chess/engine/stockfish';
+import { engineConfigStore } from '$lib/stores/engineConfig.svelte';
 import type { AnalysisResult } from '$lib/types/stockfish';
 
 interface AnalysisState {
@@ -9,6 +10,7 @@ interface AnalysisState {
 
 class AnalysisStore {
 	private engine: StockfishEngine | null = null;
+	private currentConfigVersion = 0;
 	private state = $state<AnalysisState>({
 		isAnalyzing: false,
 		result: null,
@@ -28,18 +30,21 @@ class AnalysisStore {
 	}
 
 	async initialize() {
-		if (this.engine) return;
+		// Check if engine needs reinitialization due to config change
+		if (this.engine && this.currentConfigVersion === engineConfigStore.version) {
+			return;
+		}
+
+		// Cleanup old engine if config changed
+		if (this.engine && this.currentConfigVersion !== engineConfigStore.version) {
+			this.engine.quit();
+			this.engine = null;
+		}
 
 		try {
-			this.engine = new StockfishEngine({
-				depth: 20,
-				// Multi-threaded lite version supports up to 4 threads
-				threads: typeof navigator !== 'undefined'
-					? Math.min(navigator.hardwareConcurrency || 2, 4)
-					: 2,
-				hash: 128 // 128MB hash table
-			});
+			this.engine = new StockfishEngine(engineConfigStore.config);
 			await this.engine.initialize();
+			this.currentConfigVersion = engineConfigStore.version;
 		} catch (error) {
 			this.state.error = error instanceof Error ? error.message : 'Failed to initialize engine';
 			throw error;
