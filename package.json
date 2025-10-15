@@ -10,8 +10,12 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"test": "bun scripts/test-perspective-logic.ts",
 		"test:eval": "bun scripts/test-perspective-logic.ts",
-		"test:eval:browser": "bun scripts/test-evaluations-browser.ts"
+		"test:eval:browser": "bun scripts/test-evaluations-browser.ts",
+		"test:hanging": "bun scripts/test-hanging-queen-fix.ts",
+		"test:mate": "bun scripts/test-mate-evaluations.ts",
+		"test:all": "bun scripts/test-perspective-logic.ts && bun scripts/test-hanging-queen-fix.ts && bun scripts/test-mate-evaluations.ts"
 	},
 	"dependencies": {
 		"chess.js": "^1.0.0",
