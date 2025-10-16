@@ -108,6 +108,7 @@
 				? 100
 				: 0
 			: Math.max(0, Math.min(100, 50 + whiteEval / 10))}
+		{@const bestMoveSAN = result.bestMove ? convertPVToSAN([result.bestMove], gameStore.fen)[0] || result.bestMove : '—'}
 
 		<!-- Evaluation Bar -->
 		<div class="eval-bar-wrapper relative h-6 bg-[#1e1e1e] rounded overflow-hidden mb-2">
@@ -125,6 +126,7 @@
 		<!-- Compact Stats -->
 		<div class="stats flex items-center justify-between text-xs mb-2">
 			<span class="text-[#a0a0a0]">Depth {result.depth || 0}</span>
+			<span class="text-[#4ade80] font-semibold">{bestMoveSAN}</span>
 			<span class="text-[#a0a0a0]">{result.nodes?.toLocaleString() || 0} nodes</span>
 		</div>
 
