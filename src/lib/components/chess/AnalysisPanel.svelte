@@ -139,11 +139,6 @@
 		{@const whiteToMove = isWhiteToMove(gameStore.fen)}
 		{@const whiteEval = whiteToMove ? result.evaluation : -result.evaluation}
 		{@const whiteMate = whiteToMove ? result.mate : result.mate ? -result.mate : undefined}
-		{@const evalPercent = whiteMate !== undefined
-			? whiteMate > 0
-				? 100
-				: 0
-			: Math.max(0, Math.min(100, 50 + whiteEval / 10))}
 		{@const bestMoveSAN = (() => {
 			if (!result.pv || result.pv.length === 0) return '—';
 			const firstMove = result.pv[0];
@@ -153,24 +148,11 @@
 			return san || firstMove; // Fallback to UCI if conversion fails
 		})()}
 
-		<!-- Evaluation Bar -->
-		<div class="eval-bar-wrapper relative h-6 bg-[#1e1e1e] rounded overflow-hidden mb-2">
-			<div
-				class="eval-bar-white bg-white absolute left-0 top-0 h-full transition-all duration-300"
-				style="width: {evalPercent}%"
-			></div>
-			<div
-				class="eval-text absolute inset-0 flex items-center justify-center text-xs font-bold z-10 mix-blend-difference text-white"
-			>
-				{formatEvaluation(whiteEval, whiteMate)}
-			</div>
-		</div>
-
-		<!-- Compact Stats -->
+		<!-- Compact Stats with Evaluation -->
 		<div class="stats flex items-center justify-between text-xs mb-2">
-			<span class="text-[#a0a0a0]">Depth {result.depth || 0}</span>
+			<span class="text-[#e8e8e8] font-bold">{formatEvaluation(whiteEval, whiteMate)}</span>
 			<span class="text-[#4ade80] font-semibold">{bestMoveSAN}</span>
-			<span class="text-[#a0a0a0]">{result.nodes?.toLocaleString() || 0} nodes</span>
+			<span class="text-[#a0a0a0]">D{result.depth || 0}</span>
 		</div>
 
 		<!-- Best Line with SAN notation -->
