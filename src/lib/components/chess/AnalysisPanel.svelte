@@ -108,7 +108,11 @@
 				? 100
 				: 0
 			: Math.max(0, Math.min(100, 50 + whiteEval / 10))}
-		{@const bestMoveSAN = result.bestMove ? convertPVToSAN([result.bestMove], gameStore.fen)[0] || result.bestMove : '—'}
+		{@const bestMoveSAN = (() => {
+			if (!result.bestMove) return '—';
+			const sanArray = convertPVToSAN([result.bestMove], gameStore.fen);
+			return sanArray.length > 0 ? sanArray[0] : result.bestMove;
+		})()}
 
 		<!-- Evaluation Bar -->
 		<div class="eval-bar-wrapper relative h-6 bg-[#1e1e1e] rounded overflow-hidden mb-2">
