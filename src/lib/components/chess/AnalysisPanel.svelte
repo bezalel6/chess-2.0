@@ -149,13 +149,8 @@
 			const firstMove = result.pv[0];
 			if (!firstMove) return '—';
 
-			// Quick debug log only if move looks suspicious
-			if (firstMove.length < 4) {
-				console.log('Suspicious PV first move:', firstMove, 'Full PV:', result.pv);
-			}
-
 			const san = convertUCIToSAN(firstMove, gameStore.fen);
-			return san || '—';
+			return san || firstMove; // Fallback to UCI if conversion fails
 		})()}
 
 		<!-- Evaluation Bar -->

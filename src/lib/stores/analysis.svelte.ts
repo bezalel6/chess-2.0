@@ -193,11 +193,14 @@ class AnalysisStore {
 		const timeMatch = line.match(/time (\d+)/);
 		if (timeMatch) info.time = parseInt(timeMatch[1]);
 
-		// Principal variation
-		const pvMatch = line.match(/pv\s+(.+)$/);
+		// Principal variation - FIXED: only get moves after 'pv' token
+		const pvMatch = line.match(/\bpv\s+(.+)$/);
 		if (pvMatch) {
-			// Split on spaces and filter out empty strings
-			const moves = pvMatch[1].trim().split(/\s+/).filter(m => m.length > 0);
+			// The PV only contains moves, which are in UCI format (e.g., e2e4)
+			const moves = pvMatch[1].trim().split(/\s+/).filter(m => {
+				// Valid UCI moves are 4-5 chars: e2e4 or e7e8q
+				return m.length >= 4 && m.length <= 5 && /^[a-h][1-8][a-h][1-8][qrbnQRBN]?$/.test(m);
+			});
 			info.pv = moves;
 		}
 

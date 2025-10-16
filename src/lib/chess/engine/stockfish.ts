@@ -99,8 +99,15 @@ export class StockfishEngine {
 		if (timeMatch) info.time = parseInt(timeMatch[1]);
 
 		// Principal variation
-		const pvMatch = line.match(/pv (.+)$/);
-		if (pvMatch) info.pv = pvMatch[1].split(' ');
+		const pvMatch = line.match(/\bpv\s+(.+)$/);
+		if (pvMatch) {
+			// The PV only contains moves, which are in UCI format (e.g., e2e4)
+			const moves = pvMatch[1].trim().split(/\s+/).filter(m => {
+				// Valid UCI moves are 4-5 chars: e2e4 or e7e8q
+				return m.length >= 4 && m.length <= 5 && /^[a-h][1-8][a-h][1-8][qrbnQRBN]?$/.test(m);
+			});
+			info.pv = moves;
+		}
 
 		// Multi-PV (line number when analyzing multiple lines)
 		const multiPVMatch = line.match(/multipv (\d+)/);
