@@ -138,11 +138,8 @@
 					<div class="text-xs text-[#a0a0a0] mb-1">Best Line</div>
 					<div class="moves-container overflow-x-auto">
 						<div class="moves flex gap-1.5 whitespace-nowrap text-xs">
-							{#each sanMoves as move, i}
-								<span class="move text-[#e8e8e8] flex-shrink-0">
-									{#if i % 2 === 0}<span class="text-[#a0a0a0]">{Math.floor(i / 2) + 1}.</span>{/if}
-									<span class="font-semibold">{move}</span>
-								</span>
+							{#each sanMoves as move}
+								<span class="move text-[#e8e8e8] font-semibold flex-shrink-0">{move}</span>
 							{/each}
 						</div>
 					</div>
