@@ -156,14 +156,14 @@
 		</div>
 
 		<!-- Compact Stats -->
-		<div class="stats grid grid-cols-3 gap-2 text-xs mb-2">
-			<span class="text-[#a0a0a0] text-left font-mono w-[35px]">
+		<div class="stats grid grid-cols-3 gap-2 items-center mb-2">
+			<span class="text-[#a0a0a0] text-left font-mono text-xs w-[35px]">
 				D{result.depth || 0}
 			</span>
-			<span class="text-[#4ade80] font-semibold text-center font-mono">
+			<span class="text-[#4ade80] font-bold text-center font-mono text-lg">
 				{bestMoveSAN}
 			</span>
-			<span class="text-[#a0a0a0] text-right font-mono w-[50px]">
+			<span class="text-[#a0a0a0] text-right font-mono text-xs w-[50px]">
 				{result.nodes ? `${Math.floor(result.nodes / 1000)}k` : '0k'}
 			</span>
 		</div>

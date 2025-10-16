@@ -25,18 +25,22 @@ cg-board {
 /* Interactive board square colors - Lichess blue theme */
 cg-board square.move-dest {
   background: radial-gradient(rgba(20, 85, 30, 0.5) 22%, rgba(20, 85, 30, 0.5) 0, rgba(0, 0, 0, 0.3) 0, rgba(0, 0, 0, 0) 0);
+  cursor: pointer;
 }
 
 cg-board square.premove-dest {
   background: radial-gradient(rgba(20, 30, 85, 0.5) 22%, rgba(20, 30, 85, 0.5) 0, rgba(0, 0, 0, 0.3) 0, rgba(0, 0, 0, 0) 0);
+  cursor: pointer;
 }
 
 cg-board square.oc.move-dest {
   background: radial-gradient(transparent 0%, transparent 80%, rgba(20, 85, 30, 0.5) 80%);
+  cursor: pointer;
 }
 
 cg-board square.oc.premove-dest {
   background: radial-gradient(transparent 0%, transparent 80%, rgba(20, 30, 85, 0.5) 80%);
+  cursor: pointer;
 }
 
 cg-board square.move-dest:hover {
