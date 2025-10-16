@@ -56,14 +56,16 @@
 	<ConfirmButton
 		onconfirm={handleNewGame}
 		class="control-button new-game"
+		title="Start a new game"
 	>
-		🔄 New Game
+		🔄 New
 	</ConfirmButton>
 
 	<button
 		onclick={handleUndo}
 		disabled={gameStore.history.length === 0}
 		class="control-button undo"
+		title="Undo last move"
 	>
 		↩️ Undo
 	</button>
@@ -72,15 +74,17 @@
 		onclick={handleCopyFen}
 		class="control-button copy-fen"
 		class:copied={showCopiedMessage}
+		title="Copy position as FEN"
 	>
-		{showCopiedMessage ? '✓ Copied!' : '📋 Copy FEN'}
+		{showCopiedMessage ? '✓ Copied' : '📋 FEN'}
 	</button>
 
 	<button
 		onclick={handleLoadFenClick}
 		class="control-button load-fen"
+		title="Load position from FEN"
 	>
-		📂 Load FEN
+		📂 Load
 	</button>
 
 	<button
@@ -90,7 +94,7 @@
 		class:sound-off={!soundEnabled}
 		title={soundEnabled ? 'Sound On' : 'Sound Off'}
 	>
-		{soundEnabled ? '🔊' : '🔇'} Sound
+		{soundEnabled ? '🔊' : '🔇'}
 	</button>
 </div>
 
@@ -123,28 +127,29 @@
 <style>
 	.game-controls {
 		display: flex;
-		flex-wrap: wrap;
-		gap: 0.75rem;
-		padding: 1rem;
+		gap: 0.5rem;
+		padding: 0.75rem;
 		background-color: #2d2d2d;
 		border-radius: 0.5rem;
 		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 		border: 1px solid #404040;
+		width: 600px;
+		max-width: 100%;
 	}
 
 	/* Use :global() to allow styles to penetrate child components like ConfirmButton */
 	.game-controls :global(.control-button) {
 		flex: 1;
-		min-width: 120px;
-		padding: 0.75rem 1.5rem;
+		padding: 0.625rem 0.75rem;
 		border: 2px solid #404040;
-		border-radius: 0.5rem;
+		border-radius: 0.375rem;
 		background-color: #2d2d2d;
 		color: #e8e8e8;
 		font-weight: 600;
-		font-size: 0.875rem;
+		font-size: 0.75rem;
 		cursor: pointer;
 		transition: all 0.2s;
+		white-space: nowrap;
 	}
 
 	.game-controls :global(.control-button:hover:not(:disabled)) {
