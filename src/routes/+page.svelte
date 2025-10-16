@@ -27,21 +27,23 @@
 		</div>
 
 		<!-- Testimonials Section -->
-		<div class="pt-16 max-w-md mx-auto">
-			<div class="bg-[#2d2d2d] rounded-lg border border-[#404040] p-6">
-				<h2 class="text-xl font-bold text-[#e8e8e8] mb-4 text-center">What Players Are Saying</h2>
+		{#if data.testimonials && Array.isArray(data.testimonials) && data.testimonials.length > 0}
+			<div class="pt-16 max-w-md mx-auto">
+				<div class="bg-[#2d2d2d] rounded-lg border border-[#404040] p-6">
+					<h2 class="text-xl font-bold text-[#e8e8e8] mb-4 text-center">What Players Are Saying</h2>
 
-				<div class="relative h-32 w-full overflow-hidden rounded-lg border border-[#404040] bg-[#1e1e1e]">
-					<div class="animate-scroll-vertical p-4">
-						{#each [...data.testimonials, ...data.testimonials] as testimonial}
-							<div class="mb-6">
-								<p class="text-[#e8e8e8] italic text-sm mb-2">"{testimonial.quote}"</p>
-								<p class="text-[#a0a0a0] text-xs">{testimonial.author}</p>
-							</div>
-						{/each}
+					<div class="relative h-32 w-full overflow-hidden rounded-lg border border-[#404040] bg-[#1e1e1e]">
+						<div class="animate-scroll-vertical p-4">
+							{#each [...data.testimonials, ...data.testimonials] as testimonial}
+								<div class="mb-6">
+									<p class="text-[#e8e8e8] italic text-sm mb-2">"{testimonial.quote}"</p>
+									<p class="text-[#a0a0a0] text-xs">{testimonial.author}</p>
+								</div>
+							{/each}
+						</div>
 					</div>
 				</div>
 			</div>
-		</div>
+		{/if}
 	</div>
 </main>
