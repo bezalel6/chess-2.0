@@ -134,68 +134,88 @@
 		</div>
 	{/if}
 
-	{#if analysisStore.result}
-		{@const result = analysisStore.result}
-		{@const whiteToMove = isWhiteToMove(gameStore.fen)}
-		{@const whiteEval = whiteToMove ? result.evaluation : -result.evaluation}
-		{@const whiteMate = whiteToMove ? result.mate : result.mate ? -result.mate : undefined}
-		{@const bestMoveSAN = (() => {
-			if (!result.pv || result.pv.length === 0) return '—';
-			const firstMove = result.pv[0];
-			if (!firstMove) return '—';
+	<!-- Content Container with Fixed Layout -->
+	<div class="analysis-content min-h-[160px]">
+		{#if analysisStore.result && analysisStore.isEnabled}
+			{@const result = analysisStore.result}
+			{@const whiteToMove = isWhiteToMove(gameStore.fen)}
+			{@const whiteEval = whiteToMove ? result.evaluation : -result.evaluation}
+			{@const whiteMate = whiteToMove ? result.mate : result.mate ? -result.mate : undefined}
+			{@const bestMoveSAN = (() => {
+				if (!result.pv || result.pv.length === 0) return '—';
+				const firstMove = result.pv[0];
+				if (!firstMove) return '—';
 
-			const san = convertUCIToSAN(firstMove, gameStore.fen);
-			return san || firstMove; // Fallback to UCI if conversion fails
-		})()}
+				const san = convertUCIToSAN(firstMove, gameStore.fen);
+				return san || firstMove; // Fallback to UCI if conversion fails
+			})()}
 
-		<!-- Large Evaluation Display -->
-		<div class="evaluation-display text-center mb-2 h-10 flex items-center justify-center">
-			<div class="text-3xl font-bold text-[#e8e8e8] font-mono min-w-[100px]">
-				{formatEvaluation(whiteEval, whiteMate)}
-			</div>
-		</div>
-
-		<!-- Compact Stats -->
-		<div class="stats grid grid-cols-3 gap-2 items-center mb-2">
-			<span class="text-[#a0a0a0] text-left font-mono text-xs w-[35px]">
-				D{result.depth || 0}
-			</span>
-			<span class="text-[#4ade80] font-bold text-center font-mono text-lg">
-				{bestMoveSAN}
-			</span>
-			<span class="text-[#a0a0a0] text-right font-mono text-xs w-[50px]">
-				{result.nodes ? `${Math.floor(result.nodes / 1000)}k` : '0k'}
-			</span>
-		</div>
-
-		<!-- Best Line with SAN notation -->
-		{#if result.pv && result.pv.length > 0}
-			{@const sanMoves = convertPVToSAN(result.pv.slice(0, 10), gameStore.fen)}
-			{#if sanMoves.length > 0}
-				<div class="best-line">
-					<div class="text-xs text-[#a0a0a0] mb-1">Best Line</div>
-					<div class="moves-container overflow-x-auto">
-						<div class="moves flex gap-1.5 whitespace-nowrap text-xs">
-							{#each sanMoves as move}
-								<span class="move text-[#e8e8e8] font-semibold flex-shrink-0">{move}</span>
-							{/each}
-						</div>
-					</div>
+			<!-- Large Evaluation Display -->
+			<div class="evaluation-display text-center mb-2 h-10 flex items-center justify-center">
+				<div class="text-3xl font-bold text-[#e8e8e8] font-mono min-w-[100px]">
+					{formatEvaluation(whiteEval, whiteMate)}
 				</div>
-			{/if}
+			</div>
+
+			<!-- Compact Stats -->
+			<div class="stats grid grid-cols-3 gap-2 items-center mb-2">
+				<span class="text-[#a0a0a0] text-left font-mono text-xs w-[35px]">
+					D{result.depth || 0}
+				</span>
+				<span class="text-[#4ade80] font-bold text-center font-mono text-lg">
+					{bestMoveSAN}
+				</span>
+				<span class="text-[#a0a0a0] text-right font-mono text-xs w-[50px]">
+					{result.nodes ? `${Math.floor(result.nodes / 1000)}k` : '0k'}
+				</span>
+			</div>
+
+			<!-- Best Line with SAN notation -->
+			<div class="best-line h-[40px]">
+				{#if result.pv && result.pv.length > 0}
+					{@const sanMoves = convertPVToSAN(result.pv.slice(0, 10), gameStore.fen)}
+					{#if sanMoves.length > 0}
+						<div class="text-xs text-[#a0a0a0] mb-1">Best Line</div>
+						<div class="moves-container overflow-x-auto">
+							<div class="moves flex gap-1.5 whitespace-nowrap text-xs">
+								{#each sanMoves as move}
+									<span class="move text-[#e8e8e8] font-semibold flex-shrink-0">{move}</span>
+								{/each}
+							</div>
+						</div>
+					{/if}
+				{/if}
+			</div>
+		{:else if analysisStore.isEnabled && !analysisStore.result}
+			<!-- Loading state -->
+			<div class="flex flex-col items-center justify-center h-full min-h-[160px] gap-2">
+				<div
+					class="spinner h-6 w-6 border-3 border-[#4a9eff] border-t-transparent rounded-full animate-spin"
+				></div>
+				<p class="text-[#a0a0a0] text-xs">Analyzing...</p>
+			</div>
+		{:else}
+			<!-- Disabled state - maintains layout -->
+			<div class="disabled-state">
+				<!-- Placeholder for evaluation -->
+				<div class="text-center mb-2 h-10 flex items-center justify-center">
+					<div class="text-3xl font-bold text-[#505050] font-mono">—</div>
+				</div>
+
+				<!-- Placeholder for stats -->
+				<div class="grid grid-cols-3 gap-2 items-center mb-2">
+					<span class="text-[#505050] text-left font-mono text-xs w-[35px]">—</span>
+					<span class="text-[#505050] font-bold text-center font-mono text-lg">—</span>
+					<span class="text-[#505050] text-right font-mono text-xs w-[50px]">—</span>
+				</div>
+
+				<!-- Placeholder for best line -->
+				<div class="h-[40px] flex items-center justify-center">
+					<p class="text-[#505050] text-xs">Analysis disabled</p>
+				</div>
+			</div>
 		{/if}
-	{:else if analysisStore.isEnabled && !analysisStore.result}
-		<div class="analyzing flex flex-col items-center justify-center py-6 gap-2">
-			<div
-				class="spinner h-6 w-6 border-3 border-[#4a9eff] border-t-transparent rounded-full animate-spin"
-			></div>
-			<p class="text-[#a0a0a0] text-xs">Starting...</p>
-		</div>
-	{:else if !analysisStore.isEnabled}
-		<div class="empty text-center py-6 text-[#a0a0a0] text-xs">
-			Enable to analyze
-		</div>
-	{/if}
+	</div>
 </div>
 
 <style>

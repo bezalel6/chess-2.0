@@ -19,12 +19,9 @@
 
 <main class="max-w-[1800px] mx-auto px-4 py-6">
 	<div class="flex flex-col lg:flex-row gap-6 justify-center">
-		<!-- Left Sidebar: Analysis and Turn Indicator (vertically centered) -->
+		<!-- Left Sidebar: Turn Indicator and Analysis (vertically centered) -->
 		<div class="w-full lg:w-[320px] order-1 lg:order-1 flex flex-col justify-center">
 			<div class="space-y-4">
-				<!-- Engine Analysis -->
-				<AnalysisPanel />
-
 				<!-- Turn Indicator -->
 				<div class="bg-[#2d2d2d] rounded-lg p-4 shadow-lg border border-[#404040]">
 					<div class="text-center">
@@ -45,6 +42,9 @@
 						{/if}
 					</div>
 				</div>
+
+				<!-- Engine Analysis -->
+				<AnalysisPanel />
 			</div>
 		</div>
 
