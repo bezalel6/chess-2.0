@@ -34,10 +34,17 @@
 	};
 
 	// Initialize engine on mount
-	onMount(() => {
-		analysisStore.initialize().catch((error) => {
+	onMount(async () => {
+		try {
+			await analysisStore.initialize();
+			// If analysis was previously enabled, start it automatically
+			if (analysisStore.isEnabled) {
+				const fen = gameStore.fen;
+				await analysisStore.startContinuousAnalysis(fen);
+			}
+		} catch (error) {
 			console.error('Failed to initialize Stockfish:', error);
-		});
+		}
 	});
 
 	// Watch for position changes and update analysis if enabled
@@ -126,13 +133,15 @@
 			{#if validMoves.length > 0}
 				<div class="principal-variation">
 					<div class="label text-[#a0a0a0] text-sm mb-2">Best Line</div>
-					<div class="moves flex flex-wrap gap-2">
-						{#each validMoves.slice(0, 10) as move, i}
-							<span class="move bg-[#3d3d3d] text-[#e8e8e8] px-2 py-1 rounded text-sm font-mono">
-								{#if i % 2 === 0}{Math.floor(i / 2) + 1}.{/if}
-								{move}
-							</span>
-						{/each}
+					<div class="moves-container overflow-x-auto">
+						<div class="moves flex gap-2 whitespace-nowrap">
+							{#each validMoves.slice(0, 10) as move, i}
+								<span class="move bg-[#3d3d3d] text-[#e8e8e8] px-2 py-1 rounded text-sm font-mono flex-shrink-0">
+									{#if i % 2 === 0}{Math.floor(i / 2) + 1}.{/if}
+									{move}
+								</span>
+							{/each}
+						</div>
 					</div>
 				</div>
 			{/if}

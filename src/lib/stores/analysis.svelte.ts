@@ -14,12 +14,32 @@ class AnalysisStore {
 	private currentConfigVersion = 0;
 	private currentFen: string | null = null;
 	private messageHandler: ((line: string) => void) | null = null;
+	private storageKey = 'chess-analysis-enabled';
 	private state = $state<AnalysisState>({
 		isAnalyzing: false,
-		isEnabled: false,
+		isEnabled: this.loadEnabledState(),
 		result: null,
 		error: null
 	});
+
+	private loadEnabledState(): boolean {
+		if (typeof window === 'undefined') return false;
+		try {
+			const stored = localStorage.getItem(this.storageKey);
+			return stored === 'true';
+		} catch {
+			return false;
+		}
+	}
+
+	private saveEnabledState(enabled: boolean): void {
+		if (typeof window === 'undefined') return;
+		try {
+			localStorage.setItem(this.storageKey, String(enabled));
+		} catch (error) {
+			console.warn('Failed to save analysis state to localStorage:', error);
+		}
+	}
 
 	get isAnalyzing() {
 		return this.state.isAnalyzing;
@@ -218,17 +238,20 @@ class AnalysisStore {
 			this.disable();
 		} else {
 			this.state.isEnabled = true;
+			this.saveEnabledState(true);
 		}
 	}
 
 	enable() {
 		this.state.isEnabled = true;
+		this.saveEnabledState(true);
 	}
 
 	disable() {
 		this.stopContinuousAnalysis();
 		this.state.isEnabled = false;
 		this.state.result = null;
+		this.saveEnabledState(false);
 	}
 
 	stop() {
