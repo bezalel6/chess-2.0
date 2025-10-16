@@ -6,7 +6,7 @@
 
 	const formatEvaluation = (cp: number | undefined, mate: number | undefined): string => {
 		if (mate !== undefined) {
-			return mate > 0 ? `+M${mate}` : `-M${Math.abs(mate)}`;
+			return mate > 0 ? `+M${Math.abs(mate)}` : `-M${Math.abs(mate)}`;
 		}
 		if (cp === undefined) return '0.0';
 		const pawns = (cp / 100).toFixed(1);
@@ -149,15 +149,23 @@
 		})()}
 
 		<!-- Large Evaluation Display -->
-		<div class="evaluation-display text-center mb-2">
-			<div class="text-3xl font-bold text-[#e8e8e8]">{formatEvaluation(whiteEval, whiteMate)}</div>
+		<div class="evaluation-display text-center mb-2 h-10 flex items-center justify-center">
+			<div class="text-3xl font-bold text-[#e8e8e8] font-mono min-w-[100px]">
+				{formatEvaluation(whiteEval, whiteMate)}
+			</div>
 		</div>
 
 		<!-- Compact Stats -->
-		<div class="stats flex items-center justify-between text-xs mb-2">
-			<span class="text-[#a0a0a0]">D{result.depth || 0}</span>
-			<span class="text-[#4ade80] font-semibold">{bestMoveSAN}</span>
-			<span class="text-[#a0a0a0]">{result.nodes ? `${(result.nodes / 1000).toFixed(0)}k` : '0'}</span>
+		<div class="stats grid grid-cols-3 gap-2 text-xs mb-2">
+			<span class="text-[#a0a0a0] text-left font-mono w-[35px]">
+				D{result.depth || 0}
+			</span>
+			<span class="text-[#4ade80] font-semibold text-center font-mono">
+				{bestMoveSAN}
+			</span>
+			<span class="text-[#a0a0a0] text-right font-mono w-[50px]">
+				{result.nodes ? `${Math.floor(result.nodes / 1000)}k` : '0k'}
+			</span>
 		</div>
 
 		<!-- Best Line with SAN notation -->
