@@ -3,6 +3,7 @@
 	import MoveHistory from '$lib/components/chess/MoveHistory.svelte';
 	import GameControls from '$lib/components/chess/GameControls.svelte';
 	import AnalysisPanel from '$lib/components/chess/AnalysisPanel.svelte';
+	import { gameStore } from '$lib/stores/game.svelte';
 	import { analysisStore } from '$lib/stores/analysis.svelte';
 	import { onDestroy } from 'svelte';
 
