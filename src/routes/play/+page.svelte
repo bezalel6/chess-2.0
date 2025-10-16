@@ -18,9 +18,12 @@
 </svelte:head>
 
 <main class="max-w-[1800px] mx-auto px-4 py-6">
-	<div class="flex flex-col lg:flex-row gap-6 lg:items-center justify-center">
-		<!-- Left Sidebar: Controls and Turn Indicator -->
-		<div class="w-full lg:w-[280px] space-y-4 order-1 lg:order-1">
+	<div class="flex flex-col lg:flex-row gap-6 lg:items-start justify-center">
+		<!-- Left Sidebar: Analysis, Controls and Turn Indicator -->
+		<div class="w-full lg:w-[320px] space-y-4 order-1 lg:order-1">
+			<!-- Engine Analysis -->
+			<AnalysisPanel />
+
 			<!-- Turn Indicator -->
 			<div class="bg-[#2d2d2d] rounded-lg p-4 shadow-lg border border-[#404040]">
 				<div class="text-center">
@@ -51,10 +54,9 @@
 			<Board />
 		</div>
 
-		<!-- Right Sidebar: Move History and Analysis -->
+		<!-- Right Sidebar: Move History -->
 		<div class="w-full lg:w-[280px] order-3 lg:order-3 space-y-4">
 			<MoveHistory />
-			<AnalysisPanel />
 		</div>
 	</div>
 </main>

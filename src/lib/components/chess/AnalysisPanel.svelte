@@ -19,13 +19,14 @@
 		return `${nps}`;
 	};
 
-	const startAnalysis = () => {
-		const fen = gameStore.fen;
-		analysisStore.analyze(fen);
-	};
-
-	const stopAnalysis = () => {
-		analysisStore.stop();
+	const toggleAnalysis = async () => {
+		if (analysisStore.isEnabled) {
+			analysisStore.disable();
+		} else {
+			analysisStore.enable();
+			const fen = gameStore.fen;
+			await analysisStore.startContinuousAnalysis(fen);
+		}
 	};
 
 	const isWhiteToMove = (fen: string): boolean => {
@@ -38,27 +39,31 @@
 			console.error('Failed to initialize Stockfish:', error);
 		});
 	});
+
+	// Watch for position changes and update analysis if enabled
+	$effect(() => {
+		if (analysisStore.isEnabled) {
+			const fen = gameStore.fen;
+			analysisStore.updatePosition(fen);
+		}
+	});
 </script>
 
 <div class="analysis-panel bg-[#2d2d2d] rounded-lg p-4 border border-[#404040]">
 	<div class="header flex items-center justify-between mb-4">
 		<h3 class="text-lg font-semibold text-[#e8e8e8]">Engine Analysis</h3>
 
-		{#if analysisStore.isAnalyzing}
-			<button
-				onclick={stopAnalysis}
-				class="px-3 py-1 bg-[#f87171] text-white rounded hover:bg-[#dc2626] transition text-sm font-medium"
-			>
-				Stop
-			</button>
-		{:else}
-			<button
-				onclick={startAnalysis}
-				class="px-3 py-1 bg-[#4a9eff] text-white rounded hover:bg-[#3b82f6] transition text-sm font-medium"
-			>
-				Analyze
-			</button>
-		{/if}
+		<label class="flex items-center gap-2 cursor-pointer">
+			<span class="text-sm text-[#a0a0a0]">{analysisStore.isEnabled ? 'On' : 'Off'}</span>
+			<input
+				type="checkbox"
+				checked={analysisStore.isEnabled}
+				onchange={toggleAnalysis}
+				class="w-5 h-5 text-[#4a9eff] bg-[#1e1e1e] border-[#505050] rounded
+					   focus:ring-2 focus:ring-[#4a9eff] focus:ring-offset-0
+					   focus:ring-offset-[#2d2d2d]"
+			/>
+		</label>
 	</div>
 
 	{#if analysisStore.error}
@@ -132,16 +137,16 @@
 				</div>
 			{/if}
 		{/if}
-	{:else if analysisStore.isAnalyzing}
+	{:else if analysisStore.isEnabled && !analysisStore.result}
 		<div class="analyzing flex flex-col items-center justify-center py-8 gap-3">
 			<div
 				class="spinner h-8 w-8 border-4 border-[#4a9eff] border-t-transparent rounded-full animate-spin"
 			></div>
-			<p class="text-[#a0a0a0] text-sm">Analyzing position...</p>
+			<p class="text-[#a0a0a0] text-sm">Starting analysis...</p>
 		</div>
-	{:else}
+	{:else if !analysisStore.isEnabled}
 		<div class="empty text-center py-8 text-[#a0a0a0] text-sm">
-			Click "Analyze" to start engine analysis
+			Enable analysis to see engine evaluation
 		</div>
 	{/if}
 </div>
