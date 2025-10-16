@@ -148,11 +148,16 @@
 			return san || firstMove; // Fallback to UCI if conversion fails
 		})()}
 
-		<!-- Compact Stats with Evaluation -->
+		<!-- Large Evaluation Display -->
+		<div class="evaluation-display text-center mb-2">
+			<div class="text-3xl font-bold text-[#e8e8e8]">{formatEvaluation(whiteEval, whiteMate)}</div>
+		</div>
+
+		<!-- Compact Stats -->
 		<div class="stats flex items-center justify-between text-xs mb-2">
-			<span class="text-[#e8e8e8] font-bold">{formatEvaluation(whiteEval, whiteMate)}</span>
-			<span class="text-[#4ade80] font-semibold">{bestMoveSAN}</span>
 			<span class="text-[#a0a0a0]">D{result.depth || 0}</span>
+			<span class="text-[#4ade80] font-semibold">{bestMoveSAN}</span>
+			<span class="text-[#a0a0a0]">{result.nodes ? `${(result.nodes / 1000).toFixed(0)}k` : '0'}</span>
 		</div>
 
 		<!-- Best Line with SAN notation -->
