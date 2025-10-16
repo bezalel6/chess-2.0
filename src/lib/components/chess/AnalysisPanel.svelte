@@ -23,7 +23,7 @@
 			for (const uciMove of pv) {
 				// Validate UCI format: should be like e2e4, not just a number
 				if (!uciMove || uciMove.length < 4 || !/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uciMove)) {
-					console.warn('Invalid UCI move:', uciMove);
+					// Skip invalid moves silently (they might be UCI info tokens)
 					continue;
 				}
 
@@ -36,13 +36,12 @@
 				if (move) {
 					sanMoves.push(move.san);
 				} else {
-					console.warn('Failed to convert move:', uciMove);
-					break; // Stop if we hit an invalid move
+					// Stop at first invalid move
+					break;
 				}
 			}
 			return sanMoves;
-		} catch (error) {
-			console.error('Error converting PV to SAN:', error);
+		} catch {
 			return [];
 		}
 	};
