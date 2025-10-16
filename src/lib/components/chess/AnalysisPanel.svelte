@@ -1,22 +1,42 @@
 <script lang="ts">
 	import { analysisStore } from '$lib/stores/analysis.svelte';
 	import { gameStore } from '$lib/stores/game.svelte';
+	import { GameEngine } from '$lib/chess/engine/game';
 	import { onMount } from 'svelte';
 
 	const formatEvaluation = (cp: number | undefined, mate: number | undefined): string => {
 		if (mate !== undefined) {
-			return mate > 0 ? `+M${mate}` : `M${Math.abs(mate)}`;
+			return mate > 0 ? `+M${mate}` : `-M${Math.abs(mate)}`;
 		}
-		if (cp === undefined) return '0.00';
-		const pawns = (cp / 100).toFixed(2);
+		if (cp === undefined) return '0.0';
+		const pawns = (cp / 100).toFixed(1);
 		return cp >= 0 ? `+${pawns}` : pawns;
 	};
 
-	const formatNPS = (nps: number | undefined): string => {
-		if (!nps) return '0';
-		if (nps >= 1_000_000) return `${(nps / 1_000_000).toFixed(1)}M`;
-		if (nps >= 1_000) return `${(nps / 1_000).toFixed(0)}k`;
-		return `${nps}`;
+	// Convert UCI moves to SAN notation
+	const convertPVToSAN = (pv: string[], fen: string): string[] => {
+		try {
+			const engine = new GameEngine();
+			engine.load(fen);
+
+			const sanMoves: string[] = [];
+			for (const uciMove of pv) {
+				// UCI format: e2e4, e7e5, etc.
+				const from = uciMove.substring(0, 2);
+				const to = uciMove.substring(2, 4);
+				const promotion = uciMove.length > 4 ? uciMove[4] : undefined;
+
+				const move = engine.move(from as any, to as any, promotion);
+				if (move) {
+					sanMoves.push(move.san);
+				} else {
+					break; // Stop if we hit an invalid move
+				}
+			}
+			return sanMoves;
+		} catch {
+			return [];
+		}
 	};
 
 	const toggleAnalysis = async () => {
@@ -56,25 +76,24 @@
 	});
 </script>
 
-<div class="analysis-panel bg-[#2d2d2d] rounded-lg p-4 border border-[#404040]">
-	<div class="header flex items-center justify-between mb-4">
-		<h3 class="text-lg font-semibold text-[#e8e8e8]">Engine Analysis</h3>
+<div class="analysis-panel bg-[#2d2d2d] rounded-lg p-3 border border-[#404040]">
+	<div class="header flex items-center justify-between mb-3">
+		<h3 class="text-sm font-semibold text-[#e8e8e8]">Analysis</h3>
 
 		<label class="flex items-center gap-2 cursor-pointer">
-			<span class="text-sm text-[#a0a0a0]">{analysisStore.isEnabled ? 'On' : 'Off'}</span>
+			<span class="text-xs text-[#a0a0a0]">{analysisStore.isEnabled ? 'On' : 'Off'}</span>
 			<input
 				type="checkbox"
 				checked={analysisStore.isEnabled}
 				onchange={toggleAnalysis}
-				class="w-5 h-5 text-[#4a9eff] bg-[#1e1e1e] border-[#505050] rounded
-					   focus:ring-2 focus:ring-[#4a9eff] focus:ring-offset-0
-					   focus:ring-offset-[#2d2d2d]"
+				class="w-4 h-4 text-[#4a9eff] bg-[#1e1e1e] border-[#505050] rounded
+					   focus:ring-2 focus:ring-[#4a9eff] focus:ring-offset-0"
 			/>
 		</label>
 	</div>
 
 	{#if analysisStore.error}
-		<div class="error bg-[#7f1d1d] text-[#fca5a5] p-3 rounded mb-4 text-sm">
+		<div class="error bg-[#7f1d1d] text-[#fca5a5] p-2 rounded mb-2 text-xs">
 			{analysisStore.error}
 		</div>
 	{/if}
@@ -90,55 +109,37 @@
 				: 0
 			: Math.max(0, Math.min(100, 50 + whiteEval / 10))}
 
-		<div class="evaluation-bar-container mb-4">
-			<div class="eval-bar-wrapper relative h-8 bg-[#1e1e1e] rounded overflow-hidden">
-				<div
-					class="eval-bar-white bg-white absolute left-0 top-0 h-full transition-all duration-300"
-					style="width: {evalPercent}%"
-				></div>
-				<div
-					class="eval-text absolute inset-0 flex items-center justify-center text-sm font-bold z-10 mix-blend-difference text-white"
-				>
-					{formatEvaluation(whiteEval, whiteMate)}
-				</div>
+		<!-- Evaluation Bar -->
+		<div class="eval-bar-wrapper relative h-6 bg-[#1e1e1e] rounded overflow-hidden mb-2">
+			<div
+				class="eval-bar-white bg-white absolute left-0 top-0 h-full transition-all duration-300"
+				style="width: {evalPercent}%"
+			></div>
+			<div
+				class="eval-text absolute inset-0 flex items-center justify-center text-xs font-bold z-10 mix-blend-difference text-white"
+			>
+				{formatEvaluation(whiteEval, whiteMate)}
 			</div>
 		</div>
 
-		<div class="stats grid grid-cols-2 gap-3 mb-4 text-sm">
-			<div class="stat-item">
-				<div class="label text-[#a0a0a0]">Depth</div>
-				<div class="value text-[#e8e8e8] font-semibold">{result.depth || 0}</div>
-			</div>
-
-			<div class="stat-item">
-				<div class="label text-[#a0a0a0]">Speed</div>
-				<div class="value text-[#e8e8e8] font-semibold">{formatNPS(result.nps)} n/s</div>
-			</div>
-
-			<div class="stat-item">
-				<div class="label text-[#a0a0a0]">Nodes</div>
-				<div class="value text-[#e8e8e8] font-semibold">
-					{result.nodes?.toLocaleString() || 0}
-				</div>
-			</div>
-
-			<div class="stat-item">
-				<div class="label text-[#a0a0a0]">Best Move</div>
-				<div class="value text-[#4ade80] font-semibold">{result.bestMove || '—'}</div>
-			</div>
+		<!-- Compact Stats -->
+		<div class="stats flex items-center justify-between text-xs mb-2">
+			<span class="text-[#a0a0a0]">Depth {result.depth || 0}</span>
+			<span class="text-[#a0a0a0]">{result.nodes?.toLocaleString() || 0} nodes</span>
 		</div>
 
+		<!-- Best Line with SAN notation -->
 		{#if result.pv && result.pv.length > 0}
-			{@const validMoves = result.pv.filter(move => /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(move))}
-			{#if validMoves.length > 0}
-				<div class="principal-variation">
-					<div class="label text-[#a0a0a0] text-sm mb-2">Best Line</div>
+			{@const sanMoves = convertPVToSAN(result.pv.slice(0, 10), gameStore.fen)}
+			{#if sanMoves.length > 0}
+				<div class="best-line">
+					<div class="text-xs text-[#a0a0a0] mb-1">Best Line</div>
 					<div class="moves-container overflow-x-auto">
-						<div class="moves flex gap-2 whitespace-nowrap">
-							{#each validMoves.slice(0, 10) as move, i}
-								<span class="move bg-[#3d3d3d] text-[#e8e8e8] px-2 py-1 rounded text-sm font-mono flex-shrink-0">
-									{#if i % 2 === 0}{Math.floor(i / 2) + 1}.{/if}
-									{move}
+						<div class="moves flex gap-1.5 whitespace-nowrap text-xs">
+							{#each sanMoves as move, i}
+								<span class="move text-[#e8e8e8] flex-shrink-0">
+									{#if i % 2 === 0}<span class="text-[#a0a0a0]">{Math.floor(i / 2) + 1}.</span>{/if}
+									<span class="font-semibold">{move}</span>
 								</span>
 							{/each}
 						</div>
@@ -147,15 +148,15 @@
 			{/if}
 		{/if}
 	{:else if analysisStore.isEnabled && !analysisStore.result}
-		<div class="analyzing flex flex-col items-center justify-center py-8 gap-3">
+		<div class="analyzing flex flex-col items-center justify-center py-6 gap-2">
 			<div
-				class="spinner h-8 w-8 border-4 border-[#4a9eff] border-t-transparent rounded-full animate-spin"
+				class="spinner h-6 w-6 border-3 border-[#4a9eff] border-t-transparent rounded-full animate-spin"
 			></div>
-			<p class="text-[#a0a0a0] text-sm">Starting analysis...</p>
+			<p class="text-[#a0a0a0] text-xs">Starting...</p>
 		</div>
 	{:else if !analysisStore.isEnabled}
-		<div class="empty text-center py-8 text-[#a0a0a0] text-sm">
-			Enable analysis to see engine evaluation
+		<div class="empty text-center py-6 text-[#a0a0a0] text-xs">
+			Enable to analyze
 		</div>
 	{/if}
 </div>
@@ -169,5 +170,23 @@
 
 	.animate-spin {
 		animation: spin 1s linear infinite;
+	}
+
+	.moves-container {
+		scrollbar-width: thin;
+		scrollbar-color: #404040 #2d2d2d;
+	}
+
+	.moves-container::-webkit-scrollbar {
+		height: 4px;
+	}
+
+	.moves-container::-webkit-scrollbar-track {
+		background: #2d2d2d;
+	}
+
+	.moves-container::-webkit-scrollbar-thumb {
+		background: #404040;
+		border-radius: 2px;
 	}
 </style>
