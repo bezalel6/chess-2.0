@@ -14,36 +14,65 @@
 	};
 
 	// Convert UCI moves to SAN notation
-	const convertPVToSAN = (pv: string[], fen: string): string[] => {
+	const convertUCIToSAN = (uciMove: string, fen: string): string | null => {
 		try {
+			// Clean the move string first
+			const cleanMove = uciMove?.trim();
+
+			// Validate UCI format: should be like e2e4 or e7e8q (with promotion)
+			if (!cleanMove || cleanMove.length < 4 || cleanMove.length > 5) {
+				return null;
+			}
+
+			// More lenient regex that accepts valid UCI moves
+			if (!/^[a-h][1-8][a-h][1-8][qrbnQRBN]?$/.test(cleanMove)) {
+				return null;
+			}
+
 			const engine = new GameEngine();
 			engine.load(fen);
 
-			const sanMoves: string[] = [];
-			for (const uciMove of pv) {
-				// Validate UCI format: should be like e2e4, not just a number
-				if (!uciMove || uciMove.length < 4 || !/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uciMove)) {
-					// Skip invalid moves silently (they might be UCI info tokens)
-					continue;
-				}
+			// UCI format: e2e4, e7e5, e7e8q (promotion), etc.
+			const from = cleanMove.substring(0, 2);
+			const to = cleanMove.substring(2, 4);
+			const promotion = cleanMove.length > 4 ? cleanMove[4].toLowerCase() : undefined;
 
-				// UCI format: e2e4, e7e5, etc.
-				const from = uciMove.substring(0, 2);
-				const to = uciMove.substring(2, 4);
-				const promotion = uciMove.length > 4 ? uciMove[4] : undefined;
+			const move = engine.move(from as any, to as any, promotion);
+			return move ? move.san : null;
+		} catch {
+			// Silently fail on invalid moves
+			return null;
+		}
+	};
 
-				const move = engine.move(from as any, to as any, promotion);
-				if (move) {
-					sanMoves.push(move.san);
-				} else {
-					// Stop at first invalid move
-					break;
-				}
-			}
-			return sanMoves;
+	// Convert array of UCI moves to SAN
+	const convertPVToSAN = (pv: string[], fen: string): string[] => {
+		const engine = new GameEngine();
+		try {
+			engine.load(fen);
 		} catch {
 			return [];
 		}
+
+		const sanMoves: string[] = [];
+		for (const uciMove of pv) {
+			// Validate UCI format
+			if (!uciMove || uciMove.length < 4 || !/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uciMove)) {
+				continue; // Skip invalid tokens
+			}
+
+			const from = uciMove.substring(0, 2);
+			const to = uciMove.substring(2, 4);
+			const promotion = uciMove.length > 4 ? uciMove[4] : undefined;
+
+			const move = engine.move(from as any, to as any, promotion);
+			if (move) {
+				sanMoves.push(move.san);
+			} else {
+				break; // Stop at first invalid move
+			}
+		}
+		return sanMoves;
 	};
 
 	const toggleAnalysis = async () => {
@@ -119,8 +148,14 @@
 			if (!result.pv || result.pv.length === 0) return '—';
 			const firstMove = result.pv[0];
 			if (!firstMove) return '—';
-			const sanArray = convertPVToSAN([firstMove], gameStore.fen);
-			return sanArray.length > 0 ? sanArray[0] : firstMove;
+
+			// Quick debug log only if move looks suspicious
+			if (firstMove.length < 4) {
+				console.log('Suspicious PV first move:', firstMove, 'Full PV:', result.pv);
+			}
+
+			const san = convertUCIToSAN(firstMove, gameStore.fen);
+			return san || '—';
 		})()}
 
 		<!-- Evaluation Bar -->

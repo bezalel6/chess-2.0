@@ -194,8 +194,12 @@ class AnalysisStore {
 		if (timeMatch) info.time = parseInt(timeMatch[1]);
 
 		// Principal variation
-		const pvMatch = line.match(/pv (.+)$/);
-		if (pvMatch) info.pv = pvMatch[1].split(' ');
+		const pvMatch = line.match(/pv\s+(.+)$/);
+		if (pvMatch) {
+			// Split on spaces and filter out empty strings
+			const moves = pvMatch[1].trim().split(/\s+/).filter(m => m.length > 0);
+			info.pv = moves;
+		}
 
 		// Best move (extract first move from PV)
 		if (info.pv && info.pv.length > 0) {
