@@ -21,6 +21,12 @@
 
 			const sanMoves: string[] = [];
 			for (const uciMove of pv) {
+				// Validate UCI format: should be like e2e4, not just a number
+				if (!uciMove || uciMove.length < 4 || !/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uciMove)) {
+					console.warn('Invalid UCI move:', uciMove);
+					continue;
+				}
+
 				// UCI format: e2e4, e7e5, etc.
 				const from = uciMove.substring(0, 2);
 				const to = uciMove.substring(2, 4);
@@ -30,11 +36,13 @@
 				if (move) {
 					sanMoves.push(move.san);
 				} else {
+					console.warn('Failed to convert move:', uciMove);
 					break; // Stop if we hit an invalid move
 				}
 			}
 			return sanMoves;
-		} catch {
+		} catch (error) {
+			console.error('Error converting PV to SAN:', error);
 			return [];
 		}
 	};
@@ -109,9 +117,11 @@
 				: 0
 			: Math.max(0, Math.min(100, 50 + whiteEval / 10))}
 		{@const bestMoveSAN = (() => {
-			if (!result.bestMove) return '—';
-			const sanArray = convertPVToSAN([result.bestMove], gameStore.fen);
-			return sanArray.length > 0 ? sanArray[0] : result.bestMove;
+			if (!result.pv || result.pv.length === 0) return '—';
+			const firstMove = result.pv[0];
+			if (!firstMove) return '—';
+			const sanArray = convertPVToSAN([firstMove], gameStore.fen);
+			return sanArray.length > 0 ? sanArray[0] : firstMove;
 		})()}
 
 		<!-- Evaluation Bar -->
