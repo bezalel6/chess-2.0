@@ -1,10 +1,8 @@
-import type { PageLoad } from "./$types";
+import type { PageLoad } from './$types';
+import { testimonials } from '$lib/data/testimonials';
 
-export const load: PageLoad = async ({ fetch }) => {
-	const response = await fetch("/api/testimonials");
-	const testimonials = await response.json();
-
+export const load: PageLoad = async () => {
 	return {
-		testimonials,
+		testimonials
 	};
 };

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import EvaluationTestRunner from '$lib/components/test/EvaluationTestRunner.svelte';
 </script>
 
 <svelte:head>
@@ -24,7 +23,9 @@
 			</a>
 		</div>
 
-		<EvaluationTestRunner />
+		<div class="text-center py-8 text-[#a0a0a0]">
+			Evaluation test runner has been removed.
+		</div>
 
 		<div class="mt-8 p-6 bg-[#2d2d2d] rounded-lg border border-[#404040]">
 			<h3 class="text-lg font-semibold text-[#e8e8e8] mb-4">What These Tests Check</h3>

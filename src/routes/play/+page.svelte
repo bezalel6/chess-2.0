@@ -8,8 +8,8 @@
 	import { onDestroy } from 'svelte';
 
 	// Cleanup engines on component destroy
-	onDestroy(() => {
-		analysisStore.cleanup();
+	onDestroy(async () => {
+		await analysisStore.cleanup();
 	});
 </script>
 

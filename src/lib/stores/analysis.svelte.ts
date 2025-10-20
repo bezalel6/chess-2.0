@@ -58,14 +58,12 @@ class AnalysisStore {
 	}
 
 	async initialize() {
-		// Check if engine needs reinitialization due to config change
 		if (this.engine && this.currentConfigVersion === engineConfigStore.version) {
 			return;
 		}
 
-		// Cleanup old engine if config changed
-		if (this.engine && this.currentConfigVersion !== engineConfigStore.version) {
-			this.engine.quit();
+		if (this.engine) {
+			await this.engine.quit();
 			this.engine = null;
 		}
 
@@ -93,7 +91,13 @@ class AnalysisStore {
 		this.state.error = null;
 
 		try {
-			const result = await this.engine.analyze(fen);
+			const result = await this.engine.analyze(
+				fen,
+				(update) => {
+					this.state.result = { ...this.state.result, ...update } as AnalysisResult;
+				},
+				engineConfigStore.config.moveTime
+			);
 			this.state.result = result;
 		} catch (error) {
 			this.state.error = error instanceof Error ? error.message : 'Analysis failed';
@@ -113,7 +117,6 @@ class AnalysisStore {
 			return;
 		}
 
-		// Stop any existing analysis
 		this.stopContinuousAnalysis();
 
 		this.currentFen = fen;
@@ -121,121 +124,38 @@ class AnalysisStore {
 		this.state.isEnabled = true;
 		this.state.error = null;
 
-		// Start infinite analysis with live updates
-		this.startInfiniteAnalysis(fen);
-	}
-
-	private startInfiniteAnalysis(fen: string) {
-		if (!this.engine) return;
-
-		let result: Partial<AnalysisResult> = {
-			bestMove: '',
-			evaluation: 0,
-			depth: 0,
-			nodes: 0,
-			nps: 0,
-			time: 0,
-			pv: []
-		};
-
-		// Create message handler for live updates
-		this.messageHandler = (line: string) => {
-			if (line.startsWith('info')) {
-				const parsedInfo = this.parseUCILine(line);
-				result = { ...result, ...parsedInfo };
-
-				// Update state with latest analysis (reactive)
-				this.state.result = { ...result } as AnalysisResult;
-			}
-		};
-
-		// Get access to private worker through engine
-		const engineAny = this.engine as any;
-		if (engineAny.worker && engineAny.messageHandlers) {
-			engineAny.messageHandlers.push(this.messageHandler);
-		}
-
-		// Send position and start infinite analysis
-		(this.engine as any).send(`position fen ${fen}`);
-		(this.engine as any).send('go infinite');
-	}
-
-	private parseUCILine(line: string): Partial<AnalysisResult> {
-		const info: Partial<AnalysisResult> = {};
-
-		if (!line.startsWith('info')) return info;
-
-		// Depth
-		const depthMatch = line.match(/depth (\d+)/);
-		if (depthMatch) info.depth = parseInt(depthMatch[1]);
-
-		// Selective depth
-		const seldepthMatch = line.match(/seldepth (\d+)/);
-		if (seldepthMatch) info.selectiveDepth = parseInt(seldepthMatch[1]);
-
-		// Evaluation (centipawns)
-		const cpMatch = line.match(/cp (-?\d+)/);
-		if (cpMatch) info.evaluation = parseInt(cpMatch[1]);
-
-		// Mate score
-		const mateMatch = line.match(/mate (-?\d+)/);
-		if (mateMatch) info.mate = parseInt(mateMatch[1]);
-
-		// Nodes searched
-		const nodesMatch = line.match(/nodes (\d+)/);
-		if (nodesMatch) info.nodes = parseInt(nodesMatch[1]);
-
-		// Nodes per second
-		const npsMatch = line.match(/nps (\d+)/);
-		if (npsMatch) info.nps = parseInt(npsMatch[1]);
-
-		// Time spent (milliseconds)
-		const timeMatch = line.match(/time (\d+)/);
-		if (timeMatch) info.time = parseInt(timeMatch[1]);
-
-		// Principal variation - FIXED: only get moves after 'pv' token
-		const pvMatch = line.match(/\bpv\s+(.+)$/);
-		if (pvMatch) {
-			// The PV only contains moves, which are in UCI format (e.g., e2e4)
-			const moves = pvMatch[1].trim().split(/\s+/).filter(m => {
-				// Valid UCI moves are 4-5 chars: e2e4 or e7e8q
-				return m.length >= 4 && m.length <= 5 && /^[a-h][1-8][a-h][1-8][qrbnQRBN]?$/.test(m);
+		this.engine
+			.analyze(fen, (update) => {
+				this.state.result = { ...this.state.result, ...update } as AnalysisResult;
+			})
+			.then((result) => {
+				this.state.result = result;
+			})
+			.catch((error) => {
+				if (error.message !== 'Analysis stopped') {
+					this.state.error = error instanceof Error ? error.message : 'Analysis failed';
+					console.error('Analysis error:', error);
+				}
+			})
+			.finally(() => {
+				this.state.isAnalyzing = false;
 			});
-			info.pv = moves;
-		}
-
-		// Best move (extract first move from PV)
-		if (info.pv && info.pv.length > 0) {
-			info.bestMove = info.pv[0];
-		}
-
-		return info;
 	}
 
 	updatePosition(fen: string) {
-		// If continuous analysis is enabled and position changed, restart analysis
 		if (this.state.isEnabled && fen !== this.currentFen) {
 			this.startContinuousAnalysis(fen);
 		}
 	}
 
-	stopContinuousAnalysis() {
-		if (this.engine && this.messageHandler) {
-			// Stop the engine
-			(this.engine as any).send('stop');
-
-			// Remove message handler
-			const engineAny = this.engine as any;
-			if (engineAny.messageHandlers) {
-				const index = engineAny.messageHandlers.indexOf(this.messageHandler);
-				if (index > -1) {
-					engineAny.messageHandlers.splice(index, 1);
-				}
+	async stopContinuousAnalysis() {
+		if (this.engine) {
+			try {
+				await this.engine.stop();
+			} catch (error) {
+				console.error('Error stopping analysis:', error);
 			}
-
-			this.messageHandler = null;
 		}
-
 		this.state.isAnalyzing = false;
 		this.currentFen = null;
 	}
@@ -254,15 +174,21 @@ class AnalysisStore {
 		this.saveEnabledState(true);
 	}
 
-	disable() {
-		this.stopContinuousAnalysis();
+	async disable() {
+		await this.stopContinuousAnalysis();
 		this.state.isEnabled = false;
 		this.state.result = null;
 		this.saveEnabledState(false);
 	}
 
-	stop() {
-		this.engine?.stop();
+	async stop() {
+		if (this.engine) {
+			try {
+				await this.engine.stop();
+			} catch (error) {
+				console.error('Error stopping engine:', error);
+			}
+		}
 		this.state.isAnalyzing = false;
 	}
 
@@ -270,10 +196,17 @@ class AnalysisStore {
 		this.state.result = null;
 	}
 
-	cleanup() {
-		this.stopContinuousAnalysis();
-		this.engine?.quit();
-		this.engine = null;
+	async cleanup() {
+		await this.stopContinuousAnalysis();
+		if (this.engine) {
+			try {
+				await this.engine.quit();
+			} catch (error) {
+				console.error('Error during engine cleanup:', error);
+			} finally {
+				this.engine = null;
+			}
+		}
 		this.state = {
 			isAnalyzing: false,
 			isEnabled: false,

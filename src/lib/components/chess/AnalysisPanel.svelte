@@ -77,7 +77,7 @@
 
 	const toggleAnalysis = async () => {
 		if (analysisStore.isEnabled) {
-			analysisStore.disable();
+			await analysisStore.disable();
 		} else {
 			analysisStore.enable();
 			const fen = gameStore.fen;

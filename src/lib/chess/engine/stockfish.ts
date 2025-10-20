@@ -1,197 +1,332 @@
 import type { AnalysisResult, EngineConfig } from '$lib/types/stockfish';
 
+type UCICommand = 'uci' | 'isready' | 'ucinewgame' | 'stop' | 'quit' | string;
+
+interface Command {
+	command: UCICommand;
+	resolve: (value: string | string[]) => void;
+	reject: (reason?: any) => void;
+	expectedResponse: string | RegExp;
+}
+
 export class StockfishEngine {
 	private worker: Worker | null = null;
-	private ready = false;
-	private messageHandlers: Array<(line: string) => void> = [];
+	private commandQueue: Command[] = [];
+	private isProcessing = false;
+	private currentCommand: Command | null = null;
+	private messageBuffer: string[] = [];
+	private analysisBuffer: string[] = []; // Separate buffer for analysis info lines
+	private isInitialized = false;
 
 	constructor(private config: EngineConfig = {}) {}
 
 	async initialize(): Promise<void> {
+		if (this.isInitialized) {
+			return;
+		}
+
 		return new Promise((resolve, reject) => {
 			try {
-				// Create worker from full Stockfish (multi-threaded version)
-				// Note: Single-threaded full version crashes with WASM errors
-				// Multi-threaded works with CORS headers set in hooks.server.ts
 				this.worker = new Worker('/stockfish-17.1-8e4d048.js');
 
 				this.worker.onmessage = (event: MessageEvent<string>) => {
 					const line = event.data;
-
-					// Check for ready state
-					if (line === 'uciok') {
-						this.ready = true;
-						this.configureEngine();
-						resolve();
-					}
-
-					// Call all registered message handlers
-					this.messageHandlers.forEach((handler) => handler(line));
+					this.handleMessage(line);
 				};
 
 				this.worker.onerror = (error) => {
 					console.error('Stockfish worker error:', error);
+					this.isInitialized = false;
+					if (this.currentCommand) {
+						this.currentCommand.reject(error);
+						this.currentCommand = null;
+						this.isProcessing = false;
+					}
 					reject(error);
 				};
 
-				// Initialize UCI protocol
-				this.send('uci');
+				this.sendCommand('uci', 'uciok')
+					.then(() => this.configureEngine())
+					.then(() => this.sendCommand('isready', 'readyok'))
+					.then(() => {
+						this.isInitialized = true;
+						resolve();
+					})
+					.catch((error) => {
+						this.isInitialized = false;
+						reject(error);
+					});
 			} catch (error) {
+				this.isInitialized = false;
 				reject(error);
 			}
 		});
 	}
 
-	private configureEngine(): void {
-		// Configure engine options
-		if (this.config.threads !== undefined) {
-			this.send(`setoption name Threads value ${this.config.threads}`);
-		}
-		if (this.config.hash !== undefined) {
-			this.send(`setoption name Hash value ${this.config.hash}`);
-		}
-		if (this.config.multiPV !== undefined) {
-			this.send(`setoption name MultiPV value ${this.config.multiPV}`);
+	private handleMessage(line: string): void {
+		// Store analysis info lines separately to prevent data loss
+		if (line.startsWith('info')) {
+			this.analysisBuffer.push(line);
 		}
 
-		// Always send isready to confirm engine is ready
-		this.send('isready');
+		if (this.currentCommand) {
+			this.messageBuffer.push(line);
+			const { expectedResponse } = this.currentCommand;
+
+			const isMatch =
+				(typeof expectedResponse === 'string' && line.startsWith(expectedResponse)) ||
+				(expectedResponse instanceof RegExp && expectedResponse.test(line));
+
+			if (isMatch) {
+				const response = this.messageBuffer.join('\n');
+				this.currentCommand.resolve(response);
+				this.messageBuffer = [];
+				this.currentCommand = null;
+				this.isProcessing = false;
+				this.processNextCommand();
+			}
+		}
 	}
 
-	private send(command: string): void {
-		if (!this.worker) {
-			throw new Error('Stockfish engine not initialized');
+	private processNextCommand(): void {
+		if (this.isProcessing || this.commandQueue.length === 0) {
+			return;
 		}
-		this.worker.postMessage(command);
+
+		this.isProcessing = true;
+		this.currentCommand = this.commandQueue.shift()!;
+
+		if (!this.worker) {
+			this.currentCommand.reject(new Error('Stockfish engine not initialized'));
+			this.currentCommand = null;
+			this.isProcessing = false;
+			return;
+		}
+
+		this.worker.postMessage(this.currentCommand.command);
+		// Keep isProcessing true until we get a response in handleMessage
+	}
+
+	private sendCommand(command: UCICommand, expectedResponse: string | RegExp): Promise<string> {
+		return new Promise((resolve, reject) => {
+			this.commandQueue.push({
+				command,
+				resolve: (value) => resolve(value as string),
+				reject,
+				expectedResponse
+			});
+			this.processNextCommand();
+		});
+	}
+
+	private async configureEngine(): Promise<void> {
+		// UCI setoption commands don't receive explicit confirmations
+		// We send them directly without waiting for responses
+		if (this.config.threads !== undefined) {
+			this.worker?.postMessage(`setoption name Threads value ${this.config.threads}`);
+		}
+		if (this.config.hash !== undefined) {
+			this.worker?.postMessage(`setoption name Hash value ${this.config.hash}`);
+		}
+		if (this.config.multiPV !== undefined) {
+			this.worker?.postMessage(`setoption name MultiPV value ${this.config.multiPV}`);
+		}
+
+		// Add a small delay to ensure options are processed
+		await new Promise(resolve => setTimeout(resolve, 100));
 	}
 
 	private parseUCILine(line: string): Partial<AnalysisResult> {
 		const info: Partial<AnalysisResult> = {};
+		const parts = line.split(' ');
+		let key: string | null = null;
+		let values: string[] = [];
 
-		if (!line.startsWith('info')) return info;
-
-		// Depth
-		const depthMatch = line.match(/depth (\d+)/);
-		if (depthMatch) info.depth = parseInt(depthMatch[1]);
-
-		// Selective depth
-		const seldepthMatch = line.match(/seldepth (\d+)/);
-		if (seldepthMatch) info.selectiveDepth = parseInt(seldepthMatch[1]);
-
-		// Evaluation (centipawns)
-		const cpMatch = line.match(/cp (-?\d+)/);
-		if (cpMatch) info.evaluation = parseInt(cpMatch[1]);
-
-		// Mate score
-		const mateMatch = line.match(/mate (-?\d+)/);
-		if (mateMatch) info.mate = parseInt(mateMatch[1]);
-
-		// Nodes searched
-		const nodesMatch = line.match(/nodes (\d+)/);
-		if (nodesMatch) info.nodes = parseInt(nodesMatch[1]);
-
-		// Nodes per second
-		const npsMatch = line.match(/nps (\d+)/);
-		if (npsMatch) info.nps = parseInt(npsMatch[1]);
-
-		// Time spent (milliseconds)
-		const timeMatch = line.match(/time (\d+)/);
-		if (timeMatch) info.time = parseInt(timeMatch[1]);
-
-		// Principal variation
-		const pvMatch = line.match(/\bpv\s+(.+)$/);
-		if (pvMatch) {
-			// The PV only contains moves, which are in UCI format (e.g., e2e4)
-			const moves = pvMatch[1].trim().split(/\s+/).filter(m => {
-				// Valid UCI moves are 4-5 chars: e2e4 or e7e8q
-				return m.length >= 4 && m.length <= 5 && /^[a-h][1-8][a-h][1-8][qrbnQRBN]?$/.test(m);
-			});
-			info.pv = moves;
+		for (const part of parts) {
+			if (key) {
+				if (['depth', 'seldepth', 'multipv', 'cp', 'mate', 'nodes', 'nps', 'time'].includes(part)) {
+					this.setData(info, key, values.join(' '));
+					key = part;
+					values = [];
+				} else {
+					values.push(part);
+				}
+			} else if (['info', 'depth', 'seldepth', 'multipv', 'score', 'nodes', 'nps', 'time', 'pv'].includes(part)) {
+				key = part;
+			}
 		}
 
-		// Multi-PV (line number when analyzing multiple lines)
-		const multiPVMatch = line.match(/multipv (\d+)/);
-		if (multiPVMatch) info.multiPV = parseInt(multiPVMatch[1]);
+		if (key) {
+			this.setData(info, key, values.join(' '));
+		}
 
 		return info;
 	}
 
-	async analyze(fen: string): Promise<AnalysisResult> {
-		if (!this.ready) {
-			throw new Error('Engine not ready');
+	private setData(info: Partial<AnalysisResult>, key: string, value: string): void {
+		switch (key) {
+			case 'depth':
+				info.depth = parseInt(value);
+				break;
+			case 'seldepth':
+				info.selectiveDepth = parseInt(value);
+				break;
+			case 'multipv':
+				info.multiPV = parseInt(value);
+				break;
+			case 'cp':
+				info.evaluation = parseInt(value);
+				break;
+			case 'mate':
+				info.mate = parseInt(value);
+				break;
+			case 'nodes':
+				info.nodes = parseInt(value);
+				break;
+			case 'nps':
+				info.nps = parseInt(value);
+				break;
+			case 'time':
+				info.time = parseInt(value);
+				break;
+			case 'pv':
+				info.pv = value.split(' ').filter(m => /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(m));
+				break;
+		}
+	}
+
+	async analyze(
+		fen: string,
+		onUpdate: (result: Partial<AnalysisResult>) => void,
+		moveTime?: number,
+		depth?: number
+	): Promise<AnalysisResult> {
+		if (!this.isInitialized) {
+			throw new Error('Engine not initialized');
 		}
 
-		return new Promise((resolve, reject) => {
-			let result: Partial<AnalysisResult> = {
-				bestMove: '',
-				evaluation: 0,
-				depth: 0,
-				nodes: 0,
-				nps: 0,
-				time: 0,
-				pv: []
-			};
+		// Ensure engine is ready
+		await this.sendCommand('isready', 'readyok');
 
-			const messageHandler = (line: string) => {
-				// Parse UCI output
-				if (line.startsWith('info')) {
-					const parsedInfo = this.parseUCILine(line);
-					// Update result with latest info (some fields may be undefined)
-					result = { ...result, ...parsedInfo };
-				}
+		// Set position - UCI doesn't confirm position commands
+		this.worker?.postMessage(`position fen ${fen}`);
+		await new Promise(resolve => setTimeout(resolve, 50));
 
-				// Best move found
-				if (line.startsWith('bestmove')) {
-					const match = line.match(/bestmove ([a-h][1-8][a-h][1-8][qrbn]?)/);
-					if (match) {
-						result.bestMove = match[1];
+		const goCommand = moveTime ? `go movetime ${moveTime}` : `go depth ${depth || 20}`;
 
-						// Remove handler and resolve
-						const index = this.messageHandlers.indexOf(messageHandler);
-						if (index > -1) this.messageHandlers.splice(index, 1);
+		// Clear analysis buffer before starting
+		this.analysisBuffer = [];
 
-						resolve(result as AnalysisResult);
+		// Send go command and wait for bestmove
+		const analysisPromise = this.sendCommand(goCommand, /^bestmove/);
+
+		// Process analysis updates from the separate buffer
+		const interval = setInterval(() => {
+			if (this.analysisBuffer.length > 0) {
+				const lines = [...this.analysisBuffer];
+				this.analysisBuffer = []; // Clear after copying
+
+				let result: Partial<AnalysisResult> = {};
+				lines.forEach((line) => {
+					const parsed = this.parseUCILine(line);
+					if (parsed.multiPV === undefined || parsed.multiPV === 1) {
+						result = { ...result, ...parsed };
 					}
+				});
+
+				if (Object.keys(result).length > 0) {
+					onUpdate(result);
 				}
-			};
+			}
+		}, 100); // Update more frequently for smoother feedback
 
-			// Add message handler
-			this.messageHandlers.push(messageHandler);
+		try {
+			const response = await analysisPromise;
+			clearInterval(interval);
 
-			// Send analysis commands
-			this.send(`position fen ${fen}`);
+			// Process final response
+			const lines = response.split('\n');
+			const infoLines = lines.filter((line) => line.startsWith('info'));
+			const bestMoveLine = lines.find((line) => line.startsWith('bestmove'));
 
-			if (this.config.moveTime !== undefined) {
-				this.send(`go movetime ${this.config.moveTime}`);
-			} else {
-				const depth = this.config.depth || 20;
-				this.send(`go depth ${depth}`);
+			let result: Partial<AnalysisResult> = {};
+			infoLines.forEach((line) => {
+				const parsed = this.parseUCILine(line);
+				if (parsed.multiPV === undefined || parsed.multiPV === 1) {
+					result = { ...result, ...parsed };
+				}
+			});
+
+			if (bestMoveLine) {
+				const match = bestMoveLine.match(/bestmove ([a-h][1-8][a-h][1-8][qrbn]?)/);
+				if (match) {
+					result.bestMove = match[1];
+				}
 			}
 
-			// Timeout after 30 seconds
-			setTimeout(() => {
-				const index = this.messageHandlers.indexOf(messageHandler);
-				if (index > -1) {
-					this.messageHandlers.splice(index, 1);
-					reject(new Error('Analysis timeout'));
-				}
-			}, 30000);
-		});
-	}
+			// Clear analysis buffer after analysis completes
+			this.analysisBuffer = [];
 
-	stop(): void {
-		if (this.worker && this.ready) {
-			this.send('stop');
+			return result as AnalysisResult;
+		} catch (error) {
+			clearInterval(interval);
+			this.analysisBuffer = [];
+			throw error;
 		}
 	}
 
-	quit(): void {
+	async newGame(): Promise<void> {
+		if (!this.isInitialized) {
+			throw new Error('Engine not initialized');
+		}
+
+		// UCI newgame command doesn't receive confirmation
+		this.worker?.postMessage('ucinewgame');
+
+		// Wait for engine to be ready after new game
+		await new Promise(resolve => setTimeout(resolve, 100));
+		await this.sendCommand('isready', 'readyok');
+	}
+
+	async stop(): Promise<string | null> {
+		if (!this.worker || !this.isInitialized) {
+			return null;
+		}
+
+		try {
+			// Clear any pending analysis
+			this.analysisBuffer = [];
+
+			// Send stop command and wait for bestmove response
+			const response = await this.sendCommand('stop', /^bestmove/);
+			return response;
+		} catch (error) {
+			console.error('Error stopping analysis:', error);
+			return null;
+		}
+	}
+
+	async quit(): Promise<void> {
 		if (this.worker) {
-			this.send('quit');
-			this.worker.terminate();
-			this.worker = null;
-			this.ready = false;
-			this.messageHandlers = [];
+			try {
+				// Send quit command without waiting for response
+				this.worker.postMessage('quit');
+
+				// Give engine a moment to clean up
+				await new Promise(resolve => setTimeout(resolve, 100));
+			} catch (error) {
+				console.error('Error sending quit command:', error);
+			} finally {
+				// Always terminate the worker
+				this.worker.terminate();
+				this.worker = null;
+				this.isInitialized = false;
+				this.currentCommand = null;
+				this.isProcessing = false;
+				this.commandQueue = [];
+				this.messageBuffer = [];
+				this.analysisBuffer = [];
+			}
 		}
 	}
 }
