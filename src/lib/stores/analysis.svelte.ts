@@ -273,18 +273,24 @@ class AnalysisStore {
 		const wasOff = this.state.aiPlaysAs === 'off';
 		this.state.aiPlaysAs = side;
 		this.saveAISide(side);
+		console.log('AI player set to:', side, 'was off:', wasOff, 'analysis enabled:', this.state.isEnabled);
 
 		// Auto-enable analysis if turning AI on
-		if (side !== 'off' && !this.state.isEnabled) {
-			this.state.isEnabled = true;
-			this.saveEnabledState(true);
-			// Start analysis if we have a position
+		if (side !== 'off') {
+			if (!this.state.isEnabled) {
+				this.state.isEnabled = true;
+				this.saveEnabledState(true);
+				console.log('Enabled analysis for AI mode');
+			}
+			// Always restart analysis when AI is turned on or side changes to ensure it picks up the new setting
 			if (fen) {
+				console.log('Starting continuous analysis for AI play');
 				await this.startContinuousAnalysis(fen);
 			}
 		} else if (side === 'off' && wasOff === false) {
 			// Optionally keep analysis running even when AI is off
 			// This allows users to see analysis without auto-play
+			console.log('AI turned off, keeping analysis running for manual play');
 		}
 	}
 
