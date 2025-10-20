@@ -89,6 +89,24 @@
 		return fen.split(' ')[1] === 'w';
 	};
 
+	// Play the best move on the board
+	const playBestMove = () => {
+		const result = analysisStore.result;
+		if (!result) return;
+
+		// Get the best move from either bestMove or first pv move
+		const uciMove = result.bestMove || (result.pv && result.pv[0]);
+		if (!uciMove || uciMove.length < 4) return;
+
+		// Extract from and to squares
+		const from = uciMove.substring(0, 2);
+		const to = uciMove.substring(2, 4);
+		const promotion = uciMove.length > 4 ? uciMove[4].toLowerCase() : undefined;
+
+		// Play the move
+		gameStore.makeMove(from as any, to as any, promotion);
+	};
+
 	let engineInitialized = $state(false);
 
 	// Initialize engine on mount
@@ -145,13 +163,11 @@
 			{@const whiteToMove = isWhiteToMove(gameStore.fen)}
 			{@const whiteEval = whiteToMove ? result.evaluation : -result.evaluation}
 			{@const whiteMate = whiteToMove ? result.mate : result.mate ? -result.mate : undefined}
+			{@const bestMoveUCI = result.bestMove || (result.pv && result.pv[0])}
 			{@const bestMoveSAN = (() => {
-				if (!result.pv || result.pv.length === 0) return '—';
-				const firstMove = result.pv[0];
-				if (!firstMove) return '—';
-
-				const san = convertUCIToSAN(firstMove, gameStore.fen);
-				return san || firstMove; // Fallback to UCI if conversion fails
+				if (!bestMoveUCI) return '—';
+				const san = convertUCIToSAN(bestMoveUCI, gameStore.fen);
+				return san || bestMoveUCI; // Fallback to UCI if conversion fails
 			})()}
 
 			<!-- Large Evaluation Display -->
@@ -166,9 +182,14 @@
 				<span class="text-[#a0a0a0] text-left font-mono text-xs w-[35px]">
 					D{result.depth || 0}
 				</span>
-				<span class="text-[#4ade80] font-bold text-center font-mono text-lg">
+				<button
+					onclick={playBestMove}
+					disabled={bestMoveSAN === '—'}
+					class="text-[#4ade80] font-bold text-center font-mono text-lg hover:text-[#22c55e] transition-colors cursor-pointer disabled:cursor-default disabled:hover:text-[#4ade80] px-2 py-1 rounded hover:bg-[#3d3d3d] active:bg-[#4d4d4d]"
+					title={bestMoveSAN !== '—' ? 'Click to play this move' : ''}
+				>
 					{bestMoveSAN}
-				</span>
+				</button>
 				<span class="text-[#a0a0a0] text-right font-mono text-xs w-[50px]">
 					{result.nodes ? `${Math.floor(result.nodes / 1000)}k` : '0k'}
 				</span>
