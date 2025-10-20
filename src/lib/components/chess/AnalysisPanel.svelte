@@ -87,6 +87,12 @@
 	};
 
 	const setAIPlayer = async (side: AIPlayerSide) => {
+		console.log('Setting AI player to:', side);
+		// Ensure callback is set before changing AI mode
+		if (!analysisStore.hasCallback) {
+			console.log('Callback not set yet, setting it now');
+			analysisStore.setOnBestMoveCallback(autoPlayBestMove);
+		}
 		await analysisStore.setAIPlayer(side, gameStore.fen);
 	};
 
@@ -113,18 +119,14 @@
 	};
 
 	let engineInitialized = $state(false);
-	let lastPlayedFen = $state<string | null>(null);
 
 	// Auto-play best move when AI mode is enabled
 	const autoPlayBestMove = (uciMove: string) => {
-		// Prevent playing the same move twice for the same position
-		const currentFen = gameStore.fen;
-		if (currentFen === lastPlayedFen) {
-			return;
-		}
+		console.log('autoPlayBestMove called with:', uciMove, 'AI plays as:', analysisStore.aiPlaysAs);
 
 		// Check if the game is not over
 		if (gameStore.status === 'checkmate' || gameStore.status === 'stalemate' || gameStore.status === 'draw') {
+			console.log('Game over, not playing move');
 			return;
 		}
 
@@ -133,10 +135,14 @@
 		const to = uciMove.substring(2, 4);
 		const promotion = uciMove.length > 4 ? uciMove[4].toLowerCase() : undefined;
 
+		console.log('Attempting to play move:', from, to, promotion);
+
 		// Play the move
 		const success = gameStore.makeMove(from as any, to as any, promotion);
 		if (success) {
-			lastPlayedFen = currentFen;
+			console.log('Move played successfully');
+		} else {
+			console.log('Failed to play move');
 		}
 	};
 
@@ -144,10 +150,12 @@
 	onMount(async () => {
 		try {
 			// Set up the callback for auto-playing moves
+			console.log('Setting up auto-play callback');
 			analysisStore.setOnBestMoveCallback(autoPlayBestMove);
 
 			await analysisStore.initialize();
 			engineInitialized = true;
+			console.log('Engine initialized, analysis enabled:', analysisStore.isEnabled, 'AI plays as:', analysisStore.aiPlaysAs);
 			// If analysis was previously enabled, start it automatically
 			if (analysisStore.isEnabled) {
 				const fen = gameStore.fen;
@@ -163,11 +171,8 @@
 		// Only update position if engine is initialized and analysis is enabled
 		if (engineInitialized && analysisStore.isEnabled) {
 			const fen = gameStore.fen;
+			console.log('Position changed, updating analysis for FEN:', fen);
 			analysisStore.updatePosition(fen);
-			// Reset lastPlayedFen when position changes to allow AI to play in new positions
-			if (fen !== lastPlayedFen) {
-				lastPlayedFen = null;
-			}
 		}
 	});
 </script>

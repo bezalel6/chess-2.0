@@ -92,6 +92,10 @@ class AnalysisStore {
 		return this.state.aiPlaysAs !== 'off';
 	}
 
+	get hasCallback() {
+		return !!this.onBestMoveCallback;
+	}
+
 	get result() {
 		return this.state.result;
 	}
@@ -184,15 +188,20 @@ class AnalysisStore {
 							(this.state.aiPlaysAs === 'white' && isWhiteTurn) ||
 							(this.state.aiPlaysAs === 'black' && !isWhiteTurn);
 
+						console.log('AI check - aiPlaysAs:', this.state.aiPlaysAs, 'isWhiteTurn:', isWhiteTurn, 'shouldAIPlay:', shouldAIPlay);
+
 						if (shouldAIPlay) {
 							const bestMove = update.bestMove || (update.pv && update.pv[0]);
 							const depth = update.depth || 0;
+							console.log('Best move:', bestMove, 'depth:', depth);
 							// Only play when we have a move and reached at least depth 10 for quality
 							if (bestMove && bestMove.length >= 4 && depth >= 10) {
 								hasPlayedMove = true; // Prevent multiple plays for same position
+								console.log('Playing move after delay...');
 								// Small delay to make the move visible
 								setTimeout(() => {
 									if (this.state.aiPlaysAs !== 'off' && this.onBestMoveCallback) {
+										console.log('Calling callback with move:', bestMove);
 										this.onBestMoveCallback(bestMove);
 									}
 								}, 300);
@@ -281,6 +290,7 @@ class AnalysisStore {
 
 	setOnBestMoveCallback(callback: (uciMove: string) => void) {
 		this.onBestMoveCallback = callback;
+		console.log('Best move callback set:', !!callback);
 	}
 
 	async stop() {
