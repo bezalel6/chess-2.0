@@ -120,23 +120,18 @@
 
 	// Auto-play best move when AI mode is enabled
 	const autoPlayBestMove = (uciMove: string) => {
-		console.log('[DEBUG] autoPlayBestMove called with:', uciMove, 'FEN:', gameStore.fen);
-
 		// Validate UCI move format
 		if (!uciMove || uciMove.length < 4 || uciMove.length > 5) {
-			console.error('[DEBUG] Invalid move length:', uciMove);
 			return;
 		}
 
 		// Validate it's actually a UCI move (not SAN)
 		if (!/^[a-h][1-8][a-h][1-8][qrbnQRBN]?$/.test(uciMove)) {
-			console.error('[DEBUG] Not UCI format:', uciMove);
 			return;
 		}
 
 		// Check if the game is over (handles all draw types, checkmate, stalemate)
 		if (gameStore.isGameOver) {
-			console.log('[DEBUG] Game is over, not playing move');
 			return;
 		}
 
@@ -145,21 +140,15 @@
 		const to = uciMove.substring(2, 4);
 		const promotion = uciMove.length > 4 ? uciMove[4].toLowerCase() : undefined;
 
-		console.log('[DEBUG] Attempting move from', from, 'to', to, 'promotion:', promotion);
-
 		// Verify the move is legal in the current position
 		const testEngine = new GameEngine();
 		try {
 			testEngine.load(gameStore.fen);
 			const testMove = testEngine.move(from as any, to as any, promotion);
 			if (!testMove) {
-				console.error('[DEBUG] Move validation failed - illegal move in position');
-				console.log('[DEBUG] Attempted:', from, '->', to, 'in FEN:', gameStore.fen);
 				return;
 			}
-			console.log('[DEBUG] Move validated successfully');
 		} catch (error) {
-			console.error('[DEBUG] Exception during validation:', error);
 			return;
 		}
 
@@ -167,12 +156,10 @@
 		try {
 			const success = gameStore.makeMove(from as any, to as any, promotion);
 			if (!success) {
-				console.error('[DEBUG] gameStore.makeMove returned false for:', uciMove);
-			} else {
-				console.log('[DEBUG] Move played successfully');
+				console.error('Failed to play AI move:', uciMove);
 			}
 		} catch (error) {
-			console.error('[DEBUG] Exception while playing move:', error);
+			console.error('Exception while playing AI move:', error);
 		}
 	};
 

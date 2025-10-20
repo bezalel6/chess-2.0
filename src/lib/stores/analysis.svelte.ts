@@ -168,6 +168,18 @@ class AnalysisStore {
 
 			await this.stopContinuousAnalysis();
 
+			// Check if game is already over before starting analysis
+			// This prevents the engine from getting stuck in drawn positions
+			const { GameEngine } = await import('$lib/chess/engine/game');
+			const testEngine = new GameEngine();
+			testEngine.load(fen);
+
+			if (testEngine.isGameOver()) {
+				this.state.isAnalyzing = false;
+				this.state.result = null;
+				return;
+			}
+
 			this.currentFen = fen;
 			this.state.isAnalyzing = true;
 			this.state.isEnabled = true;
@@ -175,6 +187,8 @@ class AnalysisStore {
 
 			let hasPlayedMove = false; // Track if we've already played a move for this position
 			const analysisPositionFen = fen; // Capture the position we're analyzing
+			let analysisStartTime = Date.now();
+			const MAX_WAIT_TIME = 5000; // Maximum 5 seconds to wait for AI move
 
 			this.engine
 				.analyze(fen, (update) => {
@@ -187,10 +201,6 @@ class AnalysisStore {
 
 					// Check if AI should play this position
 					if (this.state.aiPlaysAs !== 'off' && this.onBestMoveCallback && !hasPlayedMove) {
-						// Check if the game is already over in this position
-						// Parse FEN to check for draw by insufficient material or other immediate draws
-						// For now, rely on the callback to check game over status
-
 						// Determine whose turn it is from the position we're analyzing
 						const isWhiteTurn = analysisPositionFen.split(' ')[1] === 'w';
 						const shouldAIPlay =
@@ -198,38 +208,33 @@ class AnalysisStore {
 							(this.state.aiPlaysAs === 'white' && isWhiteTurn) ||
 							(this.state.aiPlaysAs === 'black' && !isWhiteTurn);
 
-						console.log('[DEBUG] AI check - aiPlaysAs:', this.state.aiPlaysAs, 'isWhiteTurn:', isWhiteTurn, 'shouldPlay:', shouldAIPlay);
-
 						if (shouldAIPlay) {
 							const bestMove = update.bestMove || (update.pv && update.pv[0]);
 							const depth = update.depth || 0;
-
-							console.log('[DEBUG] Engine analysis - bestMove:', bestMove, 'depth:', depth, 'PV:', update.pv);
+							const evaluation = update.evaluation;
+							const timeSinceStart = Date.now() - analysisStartTime;
 
 							// Validate the move is in UCI format before trying to play it
 							if (bestMove && /^[a-h][1-8][a-h][1-8][qrbnQRBN]?$/.test(bestMove)) {
-								// Only play when we have a valid move and reached at least depth 8 for quality
-								// Lowered from 10 to 8 for faster response
-								if (depth >= 8) {
+								// Adaptive depth requirement based on position evaluation
+								// In drawn positions (eval close to 0), accept lower depth
+								// Also play if we've been waiting too long
+								const isDrawnPosition = Math.abs(evaluation || 0) < 50; // Less than 0.5 pawns
+								const requiredDepth = isDrawnPosition ? 6 : 8;
+								const shouldPlayNow = depth >= requiredDepth || timeSinceStart > MAX_WAIT_TIME;
+
+								if (shouldPlayNow && depth >= 6) {
 									hasPlayedMove = true; // Prevent multiple plays for same position
-									console.log('[DEBUG] Ready to play move after delay, move:', bestMove, 'at depth:', depth);
 									// Small delay to make the move visible
 									setTimeout(() => {
 										// Double-check we're still in the same position before playing
 										if (this.currentFen === analysisPositionFen &&
 											this.state.aiPlaysAs !== 'off' &&
 											this.onBestMoveCallback) {
-											console.log('[DEBUG] Calling callback with move:', bestMove);
 											this.onBestMoveCallback(bestMove);
-										} else {
-											console.log('[DEBUG] Position changed or AI disabled, not playing');
 										}
 									}, 300);
-								} else {
-									console.log('[DEBUG] Waiting for deeper analysis, current depth:', depth, 'need: 8');
 								}
-							} else if (bestMove) {
-								console.error('[DEBUG] Invalid UCI format for bestMove:', bestMove);
 							}
 						}
 					}
@@ -255,6 +260,17 @@ class AnalysisStore {
 
 	async updatePosition(fen: string) {
 		if (this.state.isEnabled && fen !== this.currentFen) {
+			// Check if the new position is a game over state
+			const { GameEngine } = await import('$lib/chess/engine/game');
+			const testEngine = new GameEngine();
+			testEngine.load(fen);
+
+			if (testEngine.isGameOver()) {
+				await this.stopContinuousAnalysis();
+				this.state.result = null;
+				return;
+			}
+
 			// Stop any ongoing analysis first to prevent stale results
 			await this.stopContinuousAnalysis();
 			// Clear any previous results when position changes
