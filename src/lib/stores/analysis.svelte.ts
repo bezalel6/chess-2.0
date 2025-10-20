@@ -198,25 +198,38 @@ class AnalysisStore {
 							(this.state.aiPlaysAs === 'white' && isWhiteTurn) ||
 							(this.state.aiPlaysAs === 'black' && !isWhiteTurn);
 
+						console.log('[DEBUG] AI check - aiPlaysAs:', this.state.aiPlaysAs, 'isWhiteTurn:', isWhiteTurn, 'shouldPlay:', shouldAIPlay);
+
 						if (shouldAIPlay) {
 							const bestMove = update.bestMove || (update.pv && update.pv[0]);
 							const depth = update.depth || 0;
 
+							console.log('[DEBUG] Engine analysis - bestMove:', bestMove, 'depth:', depth, 'PV:', update.pv);
+
 							// Validate the move is in UCI format before trying to play it
 							if (bestMove && /^[a-h][1-8][a-h][1-8][qrbnQRBN]?$/.test(bestMove)) {
-								// Only play when we have a valid move and reached at least depth 10 for quality
-								if (depth >= 10) {
+								// Only play when we have a valid move and reached at least depth 8 for quality
+								// Lowered from 10 to 8 for faster response
+								if (depth >= 8) {
 									hasPlayedMove = true; // Prevent multiple plays for same position
+									console.log('[DEBUG] Ready to play move after delay, move:', bestMove, 'at depth:', depth);
 									// Small delay to make the move visible
 									setTimeout(() => {
 										// Double-check we're still in the same position before playing
 										if (this.currentFen === analysisPositionFen &&
 											this.state.aiPlaysAs !== 'off' &&
 											this.onBestMoveCallback) {
+											console.log('[DEBUG] Calling callback with move:', bestMove);
 											this.onBestMoveCallback(bestMove);
+										} else {
+											console.log('[DEBUG] Position changed or AI disabled, not playing');
 										}
 									}, 300);
+								} else {
+									console.log('[DEBUG] Waiting for deeper analysis, current depth:', depth, 'need: 8');
 								}
+							} else if (bestMove) {
+								console.error('[DEBUG] Invalid UCI format for bestMove:', bestMove);
 							}
 						}
 					}
