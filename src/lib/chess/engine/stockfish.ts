@@ -28,11 +28,44 @@ export class StockfishEngine {
 		return new Promise((resolve, reject) => {
 			try {
 				console.log('Initializing Stockfish worker...');
+				// Stockfish.js needs to know where to find its WASM files
+				// The worker will load them from the same path as the JS file
 				this.worker = new Worker('/stockfish-17.1-8e4d048.js');
+
+				let workerReady = false;
 
 				this.worker.onmessage = (event: MessageEvent<string>) => {
 					const line = event.data;
 					console.log('Stockfish message:', line);
+
+					// When worker is first loaded, Stockfish might send initial output
+					// Once we get any message, we know the worker is ready
+					if (!workerReady) {
+						workerReady = true;
+						console.log('Worker is ready, sending UCI command...');
+
+						// Now send the UCI command
+						this.sendCommand('uci', 'uciok')
+							.then(() => {
+								console.log('UCI initialized, configuring engine...');
+								return this.configureEngine();
+							})
+							.then(() => {
+								console.log('Engine configured, sending isready...');
+								return this.sendCommand('isready', 'readyok');
+							})
+							.then(() => {
+								console.log('Engine ready!');
+								this.isInitialized = true;
+								resolve();
+							})
+							.catch((error) => {
+								console.error('Initialization error:', error);
+								this.isInitialized = false;
+								reject(error);
+							});
+					}
+
 					this.handleMessage(line);
 				};
 
@@ -47,29 +80,33 @@ export class StockfishEngine {
 					reject(error);
 				};
 
-				// Give the worker time to load
+				// If no message received within 3 seconds, try sending UCI anyway
 				setTimeout(() => {
-					console.log('Sending UCI command...');
-					this.sendCommand('uci', 'uciok')
-						.then(() => {
-							console.log('UCI initialized, configuring engine...');
-							return this.configureEngine();
-						})
-						.then(() => {
-							console.log('Engine configured, sending isready...');
-							return this.sendCommand('isready', 'readyok');
-						})
-						.then(() => {
-							console.log('Engine ready!');
-							this.isInitialized = true;
-							resolve();
-						})
-						.catch((error) => {
-							console.error('Initialization error:', error);
-							this.isInitialized = false;
-							reject(error);
-						});
-				}, 1000); // Wait 1 second for worker to load
+					if (!workerReady) {
+						console.log('No initial message from worker, trying UCI command anyway...');
+						workerReady = true;
+
+						this.sendCommand('uci', 'uciok')
+							.then(() => {
+								console.log('UCI initialized, configuring engine...');
+								return this.configureEngine();
+							})
+							.then(() => {
+								console.log('Engine configured, sending isready...');
+								return this.sendCommand('isready', 'readyok');
+							})
+							.then(() => {
+								console.log('Engine ready!');
+								this.isInitialized = true;
+								resolve();
+							})
+							.catch((error) => {
+								console.error('Initialization error:', error);
+								this.isInitialized = false;
+								reject(error);
+							});
+					}
+				}, 3000);
 			} catch (error) {
 				console.error('Failed to create worker:', error);
 				this.isInitialized = false;
