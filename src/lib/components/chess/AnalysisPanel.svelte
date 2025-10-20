@@ -85,6 +85,10 @@
 		}
 	};
 
+	const toggleAIMode = () => {
+		analysisStore.toggleAIMode();
+	};
+
 	const isWhiteToMove = (fen: string): boolean => {
 		return fen.split(' ')[1] === 'w';
 	};
@@ -108,10 +112,39 @@
 	};
 
 	let engineInitialized = $state(false);
+	let lastPlayedFen = $state<string | null>(null);
+
+	// Auto-play best move when AI mode is enabled
+	const autoPlayBestMove = (uciMove: string) => {
+		// Prevent playing the same move twice for the same position
+		const currentFen = gameStore.fen;
+		if (currentFen === lastPlayedFen) {
+			return;
+		}
+
+		// Check if the game is not over
+		if (gameStore.status === 'checkmate' || gameStore.status === 'stalemate' || gameStore.status === 'draw') {
+			return;
+		}
+
+		// Extract from and to squares
+		const from = uciMove.substring(0, 2);
+		const to = uciMove.substring(2, 4);
+		const promotion = uciMove.length > 4 ? uciMove[4].toLowerCase() : undefined;
+
+		// Play the move
+		const success = gameStore.makeMove(from as any, to as any, promotion);
+		if (success) {
+			lastPlayedFen = currentFen;
+		}
+	};
 
 	// Initialize engine on mount
 	onMount(async () => {
 		try {
+			// Set up the callback for auto-playing moves
+			analysisStore.setOnBestMoveCallback(autoPlayBestMove);
+
 			await analysisStore.initialize();
 			engineInitialized = true;
 			// If analysis was previously enabled, start it automatically
@@ -130,6 +163,10 @@
 		if (engineInitialized && analysisStore.isEnabled) {
 			const fen = gameStore.fen;
 			analysisStore.updatePosition(fen);
+			// Reset lastPlayedFen when position changes to allow AI to play in new positions
+			if (fen !== lastPlayedFen) {
+				lastPlayedFen = null;
+			}
 		}
 	});
 </script>
@@ -149,6 +186,30 @@
 			/>
 		</label>
 	</div>
+
+	{#if analysisStore.isEnabled}
+		<!-- AI Mode Toggle -->
+		<div class="ai-mode-section bg-[#1e1e1e] rounded p-2 mb-3 border border-[#404040]">
+			<label class="flex items-center justify-between cursor-pointer">
+				<div class="flex items-center gap-2">
+					<span class="text-xs text-[#e8e8e8] font-semibold">AI Mode</span>
+					<span class="text-xs text-[#a0a0a0]">
+						{analysisStore.isAIMode ? '(Auto-play enabled)' : '(Manual play)'}
+					</span>
+				</div>
+				<input
+					type="checkbox"
+					checked={analysisStore.isAIMode}
+					onchange={toggleAIMode}
+					class="w-4 h-4 text-[#c084fc] bg-[#1e1e1e] border-[#505050] rounded
+						   focus:ring-2 focus:ring-[#c084fc] focus:ring-offset-0"
+				/>
+			</label>
+			{#if analysisStore.isAIMode}
+				<p class="text-xs text-[#a0a0a0] mt-1">Stockfish will play automatically</p>
+			{/if}
+		</div>
+	{/if}
 
 	{#if analysisStore.error}
 		<div class="error bg-[#7f1d1d] text-[#fca5a5] p-2 rounded mb-2 text-xs">

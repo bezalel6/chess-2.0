@@ -190,6 +190,132 @@ src/lib/
 - Visual feedback for checks
 - Animations and transitions
 
+**Stockfish 17.1 WASM**: Chess analysis engine
+- Multithreaded WebAssembly version
+- UCI protocol implementation
+- Real-time position evaluation
+- Principal variation calculation
+- Configurable depth, threads, and hash size
+
+### Stockfish Engine Architecture
+
+The Stockfish implementation consists of three main components:
+
+```
+src/lib/
+├── chess/engine/
+│   └── stockfish.ts         # UCI protocol wrapper for Stockfish WASM
+├── stores/
+│   ├── analysis.svelte.ts   # Analysis state management
+│   └── engineConfig.svelte.ts  # Engine configuration store
+└── components/chess/
+    └── AnalysisPanel.svelte # UI component for analysis display
+```
+
+### UCI Protocol Implementation (CRITICAL)
+
+The Universal Chess Interface (UCI) protocol is used for engine communication:
+
+**Command/Response Pattern:**
+```typescript
+// Commands that expect responses
+sendCommand('uci', 'uciok')           // Engine identification
+sendCommand('isready', 'readyok')     // Ready check
+sendCommand('go movetime 2000', /^bestmove/)  // Analysis
+
+// Commands that DON'T expect responses
+worker.postMessage('setoption name Threads value 4')  // Settings
+worker.postMessage('position fen ...')                // Position
+worker.postMessage('ucinewgame')                     // New game
+worker.postMessage('stop')                           // Stop analysis
+```
+
+**Common UCI Pitfalls:**
+1. **setoption doesn't respond**: Never wait for confirmation after setoption commands
+2. **stop may not return bestmove**: If no search is active, stop won't trigger bestmove
+3. **position doesn't confirm**: UCI doesn't acknowledge position commands
+4. **Message order matters**: Always send uci → setoption → isready → position → go
+
+### Analysis Store Architecture
+
+The analysis store manages the engine lifecycle with proper state management:
+
+```typescript
+class AnalysisStore {
+  private engine: StockfishEngine | null = null;
+  private currentFen: string | null = null;
+  private state = $state<AnalysisState>({
+    isAnalyzing: boolean,
+    isEnabled: boolean,
+    result: AnalysisResult | null,
+    error: string | null
+  });
+
+  // Key patterns:
+  // 1. Persistent enable state via localStorage
+  // 2. Engine initialization on first use
+  // 3. Continuous analysis with position updates
+  // 4. Proper async/await for all stop operations
+}
+```
+
+**State Management Patterns:**
+- **Initialization**: Lazy load engine only when analysis is enabled
+- **Continuous Analysis**: Auto-restart on position changes
+- **Error Recovery**: Graceful handling of engine failures
+- **Cleanup**: Proper worker termination to prevent memory leaks
+
+### Stockfish Worker Communication
+
+**Message Flow:**
+```typescript
+// 1. Worker initialization (wait for first message)
+worker = new Worker('/stockfish-17.1-8e4d048.js');
+worker.onmessage = (event) => {
+  // First message indicates worker ready
+  // Then send UCI initialization
+};
+
+// 2. Command queue pattern
+private commandQueue: Command[] = [];
+private currentCommand: Command | null = null;
+private isProcessing = false;
+
+// 3. Separate analysis buffer (prevents data loss)
+private analysisBuffer: string[] = [];  // Info lines
+private messageBuffer: string[] = [];   // All messages
+```
+
+### Analysis Panel Integration
+
+**Key UI Patterns:**
+```typescript
+// Initialize engine on mount
+onMount(async () => {
+  await analysisStore.initialize();
+  engineInitialized = true;
+});
+
+// Track position changes with $effect
+$effect(() => {
+  if (engineInitialized && analysisStore.isEnabled) {
+    const fen = gameStore.fen;
+    analysisStore.updatePosition(fen);
+  }
+});
+
+// Play best move on click
+const playBestMove = () => {
+  const uciMove = result.bestMove || result.pv?.[0];
+  if (uciMove) {
+    const from = uciMove.substring(0, 2);
+    const to = uciMove.substring(2, 4);
+    const promotion = uciMove[4];
+    gameStore.makeMove(from, to, promotion);
+  }
+};
+```
+
 ### Chessground CSS Import Order (CRITICAL)
 
 Chessground requires specific CSS import order in `app.css`:
@@ -279,6 +405,8 @@ onMount(() => {
 - Board rendering: 60fps animations with chessground
 - Move validation: < 10ms via chess.js
 - State updates: Version counter ensures minimal re-renders
+- Analysis updates: 100ms interval for smooth feedback
+- Engine initialization: ~3 seconds with fallback timeout
 
 ## Commit Standards
 
@@ -327,6 +455,103 @@ Environment variables:
 9. **Bun**: Use `bun` commands, not `npm` or `yarn`
 10. **Adapter Node**: Remember to set environment variables in production
 
+## Stockfish-Specific Troubleshooting
+
+### Common Issues and Solutions
+
+1. **Infinite Loading / Analysis Never Starts**
+   - **Cause**: Stop command waiting for bestmove when no search is active
+   - **Solution**: Stop command should not wait for responses, just send and continue
+   ```typescript
+   // ❌ WRONG
+   await sendCommand('stop', /^bestmove/);
+
+   // ✅ CORRECT
+   worker.postMessage('stop');
+   await new Promise(resolve => setTimeout(resolve, 100));
+   ```
+
+2. **Race Condition on Initialization**
+   - **Cause**: Analysis starting before engine fully initialized
+   - **Solution**: Use initialization flag tracked with $state
+   ```typescript
+   let engineInitialized = $state(false);
+
+   onMount(async () => {
+     await analysisStore.initialize();
+     engineInitialized = true;
+   });
+
+   $effect(() => {
+     if (engineInitialized && analysisStore.isEnabled) {
+       // Safe to use engine
+     }
+   });
+   ```
+
+3. **Best Move Not Displaying**
+   - **Cause**: Only checking result.bestMove, not result.pv
+   - **Solution**: Fallback to first PV move
+   ```typescript
+   const bestMoveUCI = result.bestMove || (result.pv && result.pv[0]);
+   ```
+
+4. **Analysis Info Lines Lost**
+   - **Cause**: Single message buffer for all UCI output
+   - **Solution**: Separate analysis buffer for info lines
+   ```typescript
+   private analysisBuffer: string[] = [];  // For info lines
+   private messageBuffer: string[] = [];   // For command responses
+   ```
+
+5. **Worker Initialization Hangs**
+   - **Cause**: Some environments don't send initial message
+   - **Solution**: Timeout fallback after 3 seconds
+   ```typescript
+   setTimeout(() => {
+     if (!workerReady) {
+       workerReady = true;
+       // Initialize anyway
+     }
+   }, 3000);
+   ```
+
+### UCI Protocol Debugging
+
+**Enable logging for UCI commands:**
+```typescript
+// In stockfish.ts
+private sendCommand(command: UCICommand, expectedResponse: string | RegExp) {
+  console.log('UCI →', command);
+  // ... rest of implementation
+}
+
+private handleMessage(line: string) {
+  console.log('UCI ←', line);
+  // ... rest of implementation
+}
+```
+
+**Common UCI response patterns:**
+- `info depth 20 seldepth 25 score cp 35 pv e2e4 e7e5`
+- `bestmove e2e4 ponder e7e5`
+- `readyok`
+- `uciok`
+
+### Memory Management
+
+**Proper cleanup sequence:**
+```typescript
+async cleanup() {
+  await this.stopContinuousAnalysis();  // Stop analysis first
+  if (this.engine) {
+    await this.engine.quit();           // Send quit command
+    this.engine = null;                 // Clear reference
+  }
+  // Reset all state
+}
+```
+
 ## Code Quality Standards
 
 - Run `bun run check` before committing
@@ -345,6 +570,12 @@ Environment variables:
 - Vite
 - **chess.js 1.0.0**: Game logic and move validation
 - **chessground 9.0.0**: Interactive chess board UI
+
+**Stockfish Engine Files (in static/):**
+- **stockfish-17.1-8e4d048.js**: Main worker file (3.5MB)
+- **stockfish-17.1-8e4d048.wasm**: WebAssembly binary (396KB)
+- **stockfish-17.1-8e4d048.worker.js**: Worker bootstrap
+- These files must be served from the same origin due to CORS restrictions
 
 **Future considerations:**
 - Socket.io for multiplayer (if desired)
@@ -370,3 +601,29 @@ When unclear about implementation details:
 - Use Bun for all commands
 - Commit early and often
 - Ask when uncertain
+
+## Key Implementation Patterns
+
+### Working with Non-Reactive Libraries
+- **Chess.js**: Use version counter pattern for reactivity
+- **Stockfish**: Use proper async/await and state management
+- **Chessground**: Extract values before passing to avoid reactivity issues
+
+### UCI Protocol Best Practices
+- Never wait for responses from setoption, position, stop commands
+- Always initialize with: uci → setoption → isready → position → go
+- Use separate buffers for analysis info lines vs command responses
+- Handle worker initialization with timeout fallback
+
+### Analysis Feature Architecture
+- Lazy load engine only when needed
+- Persist enabled state in localStorage
+- Auto-restart analysis on position changes
+- Provide clickable best move suggestions
+- Display evaluation from current player's perspective
+
+### Performance Optimizations
+- 100ms update interval for smooth analysis feedback
+- Version counter pattern for minimal re-renders
+- Proper cleanup to prevent memory leaks
+- Efficient UCI message parsing with regex
