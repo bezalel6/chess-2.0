@@ -109,6 +109,10 @@ export class StockfishEngine {
 		// Store analysis info lines separately to prevent data loss
 		if (line.startsWith('info')) {
 			this.analysisBuffer.push(line);
+			// Debug log to see what we're getting
+			if (line.includes('pv')) {
+				console.log('UCI info line with pv:', line);
+			}
 		}
 
 		if (this.currentCommand) {
@@ -181,61 +185,83 @@ export class StockfishEngine {
 	private parseUCILine(line: string): Partial<AnalysisResult> {
 		const info: Partial<AnalysisResult> = {};
 		const parts = line.split(' ');
-		let key: string | null = null;
-		let values: string[] = [];
 
-		for (const part of parts) {
-			if (key) {
-				if (['depth', 'seldepth', 'multipv', 'cp', 'mate', 'nodes', 'nps', 'time'].includes(part)) {
-					this.setData(info, key, values.join(' '));
-					key = part;
-					values = [];
-				} else {
-					values.push(part);
-				}
-			} else if (['info', 'depth', 'seldepth', 'multipv', 'score', 'nodes', 'nps', 'time', 'pv'].includes(part)) {
-				key = part;
+		for (let i = 0; i < parts.length; i++) {
+			const part = parts[i];
+
+			switch (part) {
+				case 'depth':
+					if (i + 1 < parts.length) {
+						info.depth = parseInt(parts[i + 1]);
+						i++;
+					}
+					break;
+				case 'seldepth':
+					if (i + 1 < parts.length) {
+						info.selectiveDepth = parseInt(parts[i + 1]);
+						i++;
+					}
+					break;
+				case 'multipv':
+					if (i + 1 < parts.length) {
+						info.multiPV = parseInt(parts[i + 1]);
+						i++;
+					}
+					break;
+				case 'score':
+					// Score is followed by either 'cp' or 'mate'
+					if (i + 2 < parts.length) {
+						if (parts[i + 1] === 'cp') {
+							info.evaluation = parseInt(parts[i + 2]);
+							i += 2;
+						} else if (parts[i + 1] === 'mate') {
+							info.mate = parseInt(parts[i + 2]);
+							i += 2;
+						}
+					}
+					break;
+				case 'nodes':
+					if (i + 1 < parts.length) {
+						info.nodes = parseInt(parts[i + 1]);
+						i++;
+					}
+					break;
+				case 'nps':
+					if (i + 1 < parts.length) {
+						info.nps = parseInt(parts[i + 1]);
+						i++;
+					}
+					break;
+				case 'time':
+					if (i + 1 < parts.length) {
+						info.time = parseInt(parts[i + 1]);
+						i++;
+					}
+					break;
+				case 'pv':
+					// PV is all the moves from this point to the end of the line
+					const moves = [];
+					for (let j = i + 1; j < parts.length; j++) {
+						const move = parts[j];
+						// Validate UCI move format
+						if (/^[a-h][1-8][a-h][1-8][qrbnQRBN]?$/.test(move)) {
+							moves.push(move.toLowerCase());
+						} else {
+							break; // Stop at first non-move token
+						}
+					}
+					if (moves.length > 0) {
+						info.pv = moves;
+						console.log('Parsed PV moves:', moves);
+					}
+					i = parts.length; // Skip to end since we processed all moves
+					break;
 			}
-		}
-
-		if (key) {
-			this.setData(info, key, values.join(' '));
 		}
 
 		return info;
 	}
 
-	private setData(info: Partial<AnalysisResult>, key: string, value: string): void {
-		switch (key) {
-			case 'depth':
-				info.depth = parseInt(value);
-				break;
-			case 'seldepth':
-				info.selectiveDepth = parseInt(value);
-				break;
-			case 'multipv':
-				info.multiPV = parseInt(value);
-				break;
-			case 'cp':
-				info.evaluation = parseInt(value);
-				break;
-			case 'mate':
-				info.mate = parseInt(value);
-				break;
-			case 'nodes':
-				info.nodes = parseInt(value);
-				break;
-			case 'nps':
-				info.nps = parseInt(value);
-				break;
-			case 'time':
-				info.time = parseInt(value);
-				break;
-			case 'pv':
-				info.pv = value.split(' ').filter(m => /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(m));
-				break;
-		}
-	}
 
 	async analyze(
 		fen: string,
