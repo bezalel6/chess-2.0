@@ -134,30 +134,6 @@
 
 <div class="board-container">
 	<div bind:this={boardElement} class="chessground-board" data-turn={gameStore.turn}></div>
-
-	{#if gameStore.isCheck && !gameStore.isCheckmate}
-		<div class="status-message check">
-			Check!
-		</div>
-	{/if}
-
-	{#if gameStore.isCheckmate}
-		<div class="status-message checkmate">
-			Checkmate! {gameStore.turn === 'w' ? 'Black' : 'White'} wins!
-		</div>
-	{/if}
-
-	{#if gameStore.isStalemate}
-		<div class="status-message stalemate">
-			Stalemate! Game is drawn.
-		</div>
-	{/if}
-
-	{#if gameStore.isDraw && !gameStore.isStalemate}
-		<div class="status-message draw">
-			Draw!
-		</div>
-	{/if}
 </div>
 
 {#if showPromotion}
@@ -181,40 +157,5 @@
 	.chessground-board {
 		width: 100%;
 		aspect-ratio: 1;
-	}
-
-	.status-message {
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		padding: 1rem 2rem;
-		border-radius: 0.5rem;
-		font-size: 1.5rem;
-		font-weight: bold;
-		text-align: center;
-		pointer-events: none;
-		z-index: 10;
-		box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
-		border: 2px solid;
-	}
-
-	.status-message.check {
-		background-color: rgba(250, 204, 21, 0.95);
-		color: #1e1e1e;
-		border-color: #facc15;
-	}
-
-	.status-message.checkmate {
-		background-color: rgba(248, 113, 113, 0.95);
-		color: #1e1e1e;
-		border-color: #f87171;
-	}
-
-	.status-message.stalemate,
-	.status-message.draw {
-		background-color: rgba(74, 158, 255, 0.95);
-		color: #1e1e1e;
-		border-color: #4a9eff;
 	}
 </style>

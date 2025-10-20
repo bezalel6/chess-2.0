@@ -23,22 +23,53 @@
 		<div class="w-full lg:w-[320px] order-1 lg:order-1 flex flex-col justify-center">
 			<div class="space-y-4">
 				<!-- Turn Indicator -->
-				<div class="bg-[#2d2d2d] rounded-lg p-4 shadow-lg border border-[#404040]">
+				<div class="bg-[#2d2d2d] rounded-lg p-4 shadow-lg border border-[#404040]
+					{gameStore.status === 'check' ? 'border-[#facc15]/50' :
+					 gameStore.status === 'checkmate' ? 'border-[#f87171]' :
+					 gameStore.isGameOver ? 'border-[#505050]' : ''}">
 					<div class="text-center">
-						<span class="text-lg font-semibold text-[#e8e8e8]">
-							{gameStore.turn === 'w' ? 'White' : 'Black'} to move
-						</span>
-						{#if gameStore.status !== 'active'}
-							<span
-								class="block mt-2 px-3 py-1 rounded-full text-sm font-semibold
-									{gameStore.status === 'check'
-									? 'bg-[#facc15]/20 text-[#facc15]'
-									: gameStore.status === 'checkmate'
-										? 'bg-[#f87171]/20 text-[#f87171]'
-										: 'bg-[#404040] text-[#a0a0a0]'}"
-							>
-								{gameStore.status}
-							</span>
+						{#if gameStore.status === 'checkmate'}
+							<div class="text-lg font-semibold text-[#f87171]">
+								Checkmate
+							</div>
+							<div class="text-sm text-[#a0a0a0] mt-1">
+								{gameStore.turn === 'w' ? 'Black' : 'White'} wins
+							</div>
+						{:else if gameStore.status === 'stalemate'}
+							<div class="text-lg font-semibold text-[#a0a0a0]">
+								Stalemate
+							</div>
+							<div class="text-sm text-[#707070] mt-1">
+								Game drawn
+							</div>
+						{:else if gameStore.status === 'insufficient-material'}
+							<div class="text-lg font-semibold text-[#a0a0a0]">
+								Draw
+							</div>
+							<div class="text-sm text-[#707070] mt-1">
+								Insufficient material
+							</div>
+						{:else if gameStore.status === 'threefold-repetition'}
+							<div class="text-lg font-semibold text-[#a0a0a0]">
+								Draw
+							</div>
+							<div class="text-sm text-[#707070] mt-1">
+								Threefold repetition
+							</div>
+						{:else if gameStore.status === 'draw'}
+							<div class="text-lg font-semibold text-[#a0a0a0]">
+								Draw
+							</div>
+							<div class="text-sm text-[#707070] mt-1">
+								By agreement
+							</div>
+						{:else}
+							<div class="text-lg font-semibold {gameStore.status === 'check' ? 'text-[#facc15]' : 'text-[#e8e8e8]'}">
+								{gameStore.turn === 'w' ? 'White' : 'Black'} to move
+								{#if gameStore.status === 'check'}
+									<span class="text-sm font-normal text-[#facc15] ml-2">• Check</span>
+								{/if}
+							</div>
 						{/if}
 					</div>
 				</div>
