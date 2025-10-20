@@ -73,6 +73,7 @@ class AnalysisStore {
 			this.currentConfigVersion = engineConfigStore.version;
 		} catch (error) {
 			this.state.error = error instanceof Error ? error.message : 'Failed to initialize engine';
+			this.engine = null;
 			throw error;
 		}
 	}
@@ -108,38 +109,44 @@ class AnalysisStore {
 	}
 
 	async startContinuousAnalysis(fen: string) {
-		if (!this.engine) {
-			await this.initialize();
+		try {
+			if (!this.engine) {
+				await this.initialize();
+			}
+
+			if (!this.engine) {
+				this.state.error = 'Engine not available';
+				return;
+			}
+
+			await this.stopContinuousAnalysis();
+
+			this.currentFen = fen;
+			this.state.isAnalyzing = true;
+			this.state.isEnabled = true;
+			this.state.error = null;
+
+			this.engine
+				.analyze(fen, (update) => {
+					this.state.result = { ...this.state.result, ...update } as AnalysisResult;
+				})
+				.then((result) => {
+					this.state.result = result;
+				})
+				.catch((error) => {
+					if (error.message !== 'Analysis stopped' && error.message !== 'Engine not initialized') {
+						this.state.error = error instanceof Error ? error.message : 'Analysis failed';
+						console.error('Analysis error:', error);
+					}
+				})
+				.finally(() => {
+					this.state.isAnalyzing = false;
+				});
+		} catch (error) {
+			this.state.error = error instanceof Error ? error.message : 'Failed to start analysis';
+			this.state.isAnalyzing = false;
+			console.error('Failed to start continuous analysis:', error);
 		}
-
-		if (!this.engine) {
-			this.state.error = 'Engine not available';
-			return;
-		}
-
-		this.stopContinuousAnalysis();
-
-		this.currentFen = fen;
-		this.state.isAnalyzing = true;
-		this.state.isEnabled = true;
-		this.state.error = null;
-
-		this.engine
-			.analyze(fen, (update) => {
-				this.state.result = { ...this.state.result, ...update } as AnalysisResult;
-			})
-			.then((result) => {
-				this.state.result = result;
-			})
-			.catch((error) => {
-				if (error.message !== 'Analysis stopped') {
-					this.state.error = error instanceof Error ? error.message : 'Analysis failed';
-					console.error('Analysis error:', error);
-				}
-			})
-			.finally(() => {
-				this.state.isAnalyzing = false;
-			});
 	}
 
 	updatePosition(fen: string) {

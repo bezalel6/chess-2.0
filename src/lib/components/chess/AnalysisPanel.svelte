@@ -89,10 +89,13 @@
 		return fen.split(' ')[1] === 'w';
 	};
 
+	let engineInitialized = $state(false);
+
 	// Initialize engine on mount
 	onMount(async () => {
 		try {
 			await analysisStore.initialize();
+			engineInitialized = true;
 			// If analysis was previously enabled, start it automatically
 			if (analysisStore.isEnabled) {
 				const fen = gameStore.fen;
@@ -105,7 +108,8 @@
 
 	// Watch for position changes and update analysis if enabled
 	$effect(() => {
-		if (analysisStore.isEnabled) {
+		// Only update position if engine is initialized and analysis is enabled
+		if (engineInitialized && analysisStore.isEnabled) {
 			const fen = gameStore.fen;
 			analysisStore.updatePosition(fen);
 		}
