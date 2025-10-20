@@ -174,43 +174,49 @@ class AnalysisStore {
 			this.state.error = null;
 
 			let hasPlayedMove = false; // Track if we've already played a move for this position
+			const analysisPositionFen = fen; // Capture the position we're analyzing
 
 			this.engine
 				.analyze(fen, (update) => {
+					// Ensure we're still analyzing the same position
+					if (this.currentFen !== analysisPositionFen) {
+						return;
+					}
+
 					this.state.result = { ...this.state.result, ...update } as AnalysisResult;
 
 					// Check if AI should play this position
 					if (this.state.aiPlaysAs !== 'off' && this.onBestMoveCallback && !hasPlayedMove) {
-						// Determine whose turn it is
-						const isWhiteTurn = fen.split(' ')[1] === 'w';
+						// Check if the game is already over in this position
+						// Parse FEN to check for draw by insufficient material or other immediate draws
+						// For now, rely on the callback to check game over status
+
+						// Determine whose turn it is from the position we're analyzing
+						const isWhiteTurn = analysisPositionFen.split(' ')[1] === 'w';
 						const shouldAIPlay =
 							this.state.aiPlaysAs === 'both' ||
 							(this.state.aiPlaysAs === 'white' && isWhiteTurn) ||
 							(this.state.aiPlaysAs === 'black' && !isWhiteTurn);
 
-						console.log('AI check - aiPlaysAs:', this.state.aiPlaysAs, 'isWhiteTurn:', isWhiteTurn, 'shouldAIPlay:', shouldAIPlay);
-
 						if (shouldAIPlay) {
 							const bestMove = update.bestMove || (update.pv && update.pv[0]);
 							const depth = update.depth || 0;
-							console.log('Best move:', bestMove, 'depth:', depth, 'PV:', update.pv);
 
 							// Validate the move is in UCI format before trying to play it
 							if (bestMove && /^[a-h][1-8][a-h][1-8][qrbnQRBN]?$/.test(bestMove)) {
 								// Only play when we have a valid move and reached at least depth 10 for quality
 								if (depth >= 10) {
 									hasPlayedMove = true; // Prevent multiple plays for same position
-									console.log('Playing move after delay...');
 									// Small delay to make the move visible
 									setTimeout(() => {
-										if (this.state.aiPlaysAs !== 'off' && this.onBestMoveCallback) {
-											console.log('Calling callback with move:', bestMove);
+										// Double-check we're still in the same position before playing
+										if (this.currentFen === analysisPositionFen &&
+											this.state.aiPlaysAs !== 'off' &&
+											this.onBestMoveCallback) {
 											this.onBestMoveCallback(bestMove);
 										}
 									}, 300);
 								}
-							} else if (bestMove) {
-								console.error('Best move is not in valid UCI format:', bestMove);
 							}
 						}
 					}
@@ -234,9 +240,16 @@ class AnalysisStore {
 		}
 	}
 
-	updatePosition(fen: string) {
+	async updatePosition(fen: string) {
 		if (this.state.isEnabled && fen !== this.currentFen) {
-			this.startContinuousAnalysis(fen);
+			// Stop any ongoing analysis first to prevent stale results
+			await this.stopContinuousAnalysis();
+			// Clear any previous results when position changes
+			this.state.result = null;
+			// Small delay to ensure engine is fully stopped
+			await new Promise(resolve => setTimeout(resolve, 100));
+			// Start fresh analysis for the new position
+			await this.startContinuousAnalysis(fen);
 		}
 	}
 
@@ -279,30 +292,25 @@ class AnalysisStore {
 		const wasOff = this.state.aiPlaysAs === 'off';
 		this.state.aiPlaysAs = side;
 		this.saveAISide(side);
-		console.log('AI player set to:', side, 'was off:', wasOff, 'analysis enabled:', this.state.isEnabled);
 
 		// Auto-enable analysis if turning AI on
 		if (side !== 'off') {
 			if (!this.state.isEnabled) {
 				this.state.isEnabled = true;
 				this.saveEnabledState(true);
-				console.log('Enabled analysis for AI mode');
 			}
 			// Always restart analysis when AI is turned on or side changes to ensure it picks up the new setting
 			if (fen) {
-				console.log('Starting continuous analysis for AI play');
 				await this.startContinuousAnalysis(fen);
 			}
 		} else if (side === 'off' && wasOff === false) {
 			// Optionally keep analysis running even when AI is off
 			// This allows users to see analysis without auto-play
-			console.log('AI turned off, keeping analysis running for manual play');
 		}
 	}
 
 	setOnBestMoveCallback(callback: (uciMove: string) => void) {
 		this.onBestMoveCallback = callback;
-		console.log('Best move callback set:', !!callback);
 	}
 
 	async stop() {

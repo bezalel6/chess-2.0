@@ -87,10 +87,8 @@
 	};
 
 	const setAIPlayer = async (side: AIPlayerSide) => {
-		console.log('Setting AI player to:', side);
 		// Ensure callback is set before changing AI mode
 		if (!analysisStore.hasCallback) {
-			console.log('Callback not set yet, setting it now');
 			analysisStore.setOnBestMoveCallback(autoPlayBestMove);
 		}
 		await analysisStore.setAIPlayer(side, gameStore.fen);
@@ -122,27 +120,18 @@
 
 	// Auto-play best move when AI mode is enabled
 	const autoPlayBestMove = (uciMove: string) => {
-		console.log('autoPlayBestMove called with:', uciMove, 'AI plays as:', analysisStore.aiPlaysAs);
-
 		// Validate UCI move format
 		if (!uciMove || uciMove.length < 4 || uciMove.length > 5) {
-			console.error('Invalid UCI move format:', uciMove);
 			return;
 		}
 
 		// Validate it's actually a UCI move (not SAN)
 		if (!/^[a-h][1-8][a-h][1-8][qrbnQRBN]?$/.test(uciMove)) {
-			console.error('Move is not in UCI format:', uciMove);
-			// Check if it might be SAN format
-			if (/^[KQRBN]/.test(uciMove) || /^[a-h]x/.test(uciMove) || /^\d/.test(uciMove)) {
-				console.error('Move appears to be in SAN format, expecting UCI');
-			}
 			return;
 		}
 
-		// Check if the game is not over
-		if (gameStore.status === 'checkmate' || gameStore.status === 'stalemate' || gameStore.status === 'draw') {
-			console.log('Game over, not playing move');
+		// Check if the game is over (handles all draw types, checkmate, stalemate)
+		if (gameStore.isGameOver) {
 			return;
 		}
 
@@ -151,19 +140,26 @@
 		const to = uciMove.substring(2, 4);
 		const promotion = uciMove.length > 4 ? uciMove[4].toLowerCase() : undefined;
 
-		console.log('Attempting to play move:', from, to, promotion, 'Current FEN:', gameStore.fen);
+		// Verify the move is legal in the current position
+		const testEngine = new GameEngine();
+		try {
+			testEngine.load(gameStore.fen);
+			const testMove = testEngine.move(from as any, to as any, promotion);
+			if (!testMove) {
+				return;
+			}
+		} catch (error) {
+			return;
+		}
 
 		// Play the move
 		try {
 			const success = gameStore.makeMove(from as any, to as any, promotion);
-			if (success) {
-				console.log('Move played successfully');
-			} else {
-				console.error('Failed to play move - move is illegal or invalid in current position');
-				console.log('Tried to move from', from, 'to', to, 'with promotion:', promotion);
+			if (!success) {
+				console.error('Failed to play AI move:', uciMove);
 			}
 		} catch (error) {
-			console.error('Exception while playing move:', error);
+			console.error('Exception while playing AI move:', error);
 		}
 	};
 
@@ -171,12 +167,10 @@
 	onMount(async () => {
 		try {
 			// Set up the callback for auto-playing moves
-			console.log('Setting up auto-play callback');
 			analysisStore.setOnBestMoveCallback(autoPlayBestMove);
 
 			await analysisStore.initialize();
 			engineInitialized = true;
-			console.log('Engine initialized, analysis enabled:', analysisStore.isEnabled, 'AI plays as:', analysisStore.aiPlaysAs);
 			// If analysis was previously enabled, start it automatically
 			if (analysisStore.isEnabled) {
 				const fen = gameStore.fen;
@@ -192,8 +186,19 @@
 		// Only update position if engine is initialized and analysis is enabled
 		if (engineInitialized && analysisStore.isEnabled) {
 			const fen = gameStore.fen;
-			console.log('Position changed, updating analysis for FEN:', fen);
-			analysisStore.updatePosition(fen);
+
+			// Stop analysis if game is over
+			if (gameStore.isGameOver) {
+				(async () => {
+					await analysisStore.stopContinuousAnalysis();
+				})();
+				return;
+			}
+
+			// Use async IIFE to await the updatePosition call
+			(async () => {
+				await analysisStore.updatePosition(fen);
+			})();
 		}
 	});
 </script>

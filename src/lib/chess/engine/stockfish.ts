@@ -109,10 +109,6 @@ export class StockfishEngine {
 		// Store analysis info lines separately to prevent data loss
 		if (line.startsWith('info')) {
 			this.analysisBuffer.push(line);
-			// Debug log to see what we're getting
-			if (line.includes('pv')) {
-				console.log('UCI info line with pv:', line);
-			}
 		}
 
 		if (this.currentCommand) {
@@ -252,7 +248,6 @@ export class StockfishEngine {
 					}
 					if (moves.length > 0) {
 						info.pv = moves;
-						console.log('Parsed PV moves:', moves);
 					}
 					i = parts.length; // Skip to end since we processed all moves
 					break;
