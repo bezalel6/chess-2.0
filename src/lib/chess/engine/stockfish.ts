@@ -47,26 +47,29 @@ export class StockfishEngine {
 					reject(error);
 				};
 
-				console.log('Sending UCI command...');
-				this.sendCommand('uci', 'uciok')
-					.then(() => {
-						console.log('UCI initialized, configuring engine...');
-						return this.configureEngine();
-					})
-					.then(() => {
-						console.log('Engine configured, sending isready...');
-						return this.sendCommand('isready', 'readyok');
-					})
-					.then(() => {
-						console.log('Engine ready!');
-						this.isInitialized = true;
-						resolve();
-					})
-					.catch((error) => {
-						console.error('Initialization error:', error);
-						this.isInitialized = false;
-						reject(error);
-					});
+				// Give the worker time to load
+				setTimeout(() => {
+					console.log('Sending UCI command...');
+					this.sendCommand('uci', 'uciok')
+						.then(() => {
+							console.log('UCI initialized, configuring engine...');
+							return this.configureEngine();
+						})
+						.then(() => {
+							console.log('Engine configured, sending isready...');
+							return this.sendCommand('isready', 'readyok');
+						})
+						.then(() => {
+							console.log('Engine ready!');
+							this.isInitialized = true;
+							resolve();
+						})
+						.catch((error) => {
+							console.error('Initialization error:', error);
+							this.isInitialized = false;
+							reject(error);
+						});
+				}, 1000); // Wait 1 second for worker to load
 			} catch (error) {
 				console.error('Failed to create worker:', error);
 				this.isInitialized = false;
