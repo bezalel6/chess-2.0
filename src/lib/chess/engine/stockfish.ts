@@ -27,10 +27,12 @@ export class StockfishEngine {
 
 		return new Promise((resolve, reject) => {
 			try {
+				console.log('Initializing Stockfish worker...');
 				this.worker = new Worker('/stockfish-17.1-8e4d048.js');
 
 				this.worker.onmessage = (event: MessageEvent<string>) => {
 					const line = event.data;
+					console.log('Stockfish message:', line);
 					this.handleMessage(line);
 				};
 
@@ -45,18 +47,28 @@ export class StockfishEngine {
 					reject(error);
 				};
 
+				console.log('Sending UCI command...');
 				this.sendCommand('uci', 'uciok')
-					.then(() => this.configureEngine())
-					.then(() => this.sendCommand('isready', 'readyok'))
 					.then(() => {
+						console.log('UCI initialized, configuring engine...');
+						return this.configureEngine();
+					})
+					.then(() => {
+						console.log('Engine configured, sending isready...');
+						return this.sendCommand('isready', 'readyok');
+					})
+					.then(() => {
+						console.log('Engine ready!');
 						this.isInitialized = true;
 						resolve();
 					})
 					.catch((error) => {
+						console.error('Initialization error:', error);
 						this.isInitialized = false;
 						reject(error);
 					});
 			} catch (error) {
+				console.error('Failed to create worker:', error);
 				this.isInitialized = false;
 				reject(error);
 			}
@@ -73,30 +85,40 @@ export class StockfishEngine {
 			this.messageBuffer.push(line);
 			const { expectedResponse } = this.currentCommand;
 
+			console.log(`Checking if "${line}" matches expected: "${expectedResponse}"`);
+
 			const isMatch =
 				(typeof expectedResponse === 'string' && line.startsWith(expectedResponse)) ||
 				(expectedResponse instanceof RegExp && expectedResponse.test(line));
 
 			if (isMatch) {
+				console.log(`Match found! Resolving command: "${this.currentCommand.command}"`);
 				const response = this.messageBuffer.join('\n');
 				this.currentCommand.resolve(response);
 				this.messageBuffer = [];
 				this.currentCommand = null;
 				this.isProcessing = false;
 				this.processNextCommand();
+			} else {
+				console.log('No match, continuing to wait...');
 			}
+		} else {
+			console.log(`Message received but no command waiting: "${line}"`);
 		}
 	}
 
 	private processNextCommand(): void {
 		if (this.isProcessing || this.commandQueue.length === 0) {
+			console.log(`Not processing: isProcessing=${this.isProcessing}, queue length=${this.commandQueue.length}`);
 			return;
 		}
 
 		this.isProcessing = true;
 		this.currentCommand = this.commandQueue.shift()!;
+		console.log(`Processing command: "${this.currentCommand.command}"`);
 
 		if (!this.worker) {
+			console.error('Worker not initialized');
 			this.currentCommand.reject(new Error('Stockfish engine not initialized'));
 			this.currentCommand = null;
 			this.isProcessing = false;
@@ -104,15 +126,23 @@ export class StockfishEngine {
 		}
 
 		this.worker.postMessage(this.currentCommand.command);
+		console.log(`Command sent to worker: "${this.currentCommand.command}"`);
 		// Keep isProcessing true until we get a response in handleMessage
 	}
 
 	private sendCommand(command: UCICommand, expectedResponse: string | RegExp): Promise<string> {
+		console.log(`Queuing command: "${command}", expecting: "${expectedResponse}"`);
 		return new Promise((resolve, reject) => {
 			this.commandQueue.push({
 				command,
-				resolve: (value) => resolve(value as string),
-				reject,
+				resolve: (value) => {
+					console.log(`Command resolved: "${command}"`);
+					resolve(value as string);
+				},
+				reject: (reason) => {
+					console.error(`Command rejected: "${command}"`, reason);
+					reject(reason);
+				},
 				expectedResponse
 			});
 			this.processNextCommand();
