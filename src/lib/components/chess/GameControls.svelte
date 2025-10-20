@@ -6,6 +6,7 @@
 	let fenInput = $state('');
 	let fenError = $state('');
 	let showCopiedMessage = $state(false);
+	let showPgnCopiedMessage = $state(false);
 	let soundEnabled = $derived(gameStore.isSoundEnabled());
 
 	function handleNewGame() {
@@ -21,6 +22,15 @@
 		showCopiedMessage = true;
 		setTimeout(() => {
 			showCopiedMessage = false;
+		}, 2000);
+	}
+
+	function handleCopyPgn() {
+		const pgn = gameStore.getPgn();
+		navigator.clipboard.writeText(pgn);
+		showPgnCopiedMessage = true;
+		setTimeout(() => {
+			showPgnCopiedMessage = false;
 		}, 2000);
 	}
 
@@ -77,6 +87,15 @@
 		title="Copy position as FEN"
 	>
 		{showCopiedMessage ? '✓ Copied' : '📋 FEN'}
+	</button>
+
+	<button
+		onclick={handleCopyPgn}
+		class="control-button copy-pgn"
+		class:copied={showPgnCopiedMessage}
+		title="Copy game as PGN"
+	>
+		{showPgnCopiedMessage ? '✓ Copied' : '♟️ PGN'}
 	</button>
 
 	<button
@@ -176,6 +195,11 @@
 	.game-controls :global(.control-button.copy-fen:hover:not(:disabled)) {
 		border-color: #4ade80;
 		color: #4ade80;
+	}
+
+	.game-controls :global(.control-button.copy-pgn:hover:not(:disabled)) {
+		border-color: #4a9eff;
+		color: #4a9eff;
 	}
 
 	.game-controls :global(.control-button.load-fen:hover:not(:disabled)) {
