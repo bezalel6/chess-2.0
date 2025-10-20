@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { analysisStore } from '$lib/stores/analysis.svelte';
+	import type { AIPlayerSide } from '$lib/stores/analysis.svelte';
 	import { gameStore } from '$lib/stores/game.svelte';
 	import { GameEngine } from '$lib/chess/engine/game';
 	import { onMount } from 'svelte';
@@ -85,8 +86,8 @@
 		}
 	};
 
-	const toggleAIMode = () => {
-		analysisStore.toggleAIMode();
+	const setAIPlayer = async (side: AIPlayerSide) => {
+		await analysisStore.setAIPlayer(side, gameStore.fen);
 	};
 
 	const isWhiteToMove = (fen: string): boolean => {
@@ -187,29 +188,67 @@
 		</label>
 	</div>
 
-	{#if analysisStore.isEnabled}
-		<!-- AI Mode Toggle -->
-		<div class="ai-mode-section bg-[#1e1e1e] rounded p-2 mb-3 border border-[#404040]">
-			<label class="flex items-center justify-between cursor-pointer">
-				<div class="flex items-center gap-2">
-					<span class="text-xs text-[#e8e8e8] font-semibold">AI Mode</span>
-					<span class="text-xs text-[#a0a0a0]">
-						{analysisStore.isAIMode ? '(Auto-play enabled)' : '(Manual play)'}
-					</span>
-				</div>
-				<input
-					type="checkbox"
-					checked={analysisStore.isAIMode}
-					onchange={toggleAIMode}
-					class="w-4 h-4 text-[#c084fc] bg-[#1e1e1e] border-[#505050] rounded
-						   focus:ring-2 focus:ring-[#c084fc] focus:ring-offset-0"
-				/>
-			</label>
-			{#if analysisStore.isAIMode}
-				<p class="text-xs text-[#a0a0a0] mt-1">Stockfish will play automatically</p>
+	<!-- AI Opponent Section - Always visible, more prominent -->
+	<div class="ai-section bg-[#1e1e1e] rounded-lg p-3 mb-3 border border-[#404040]">
+		<div class="flex items-center justify-between mb-2">
+			<h4 class="text-xs font-semibold text-[#e8e8e8]">AI Opponent</h4>
+			{#if analysisStore.isAIActive && analysisStore.isAnalyzing}
+				<span class="text-xs text-[#4ade80] flex items-center gap-1">
+					<span class="inline-block w-1.5 h-1.5 bg-[#4ade80] rounded-full animate-pulse"></span>
+					AI thinking...
+				</span>
 			{/if}
 		</div>
-	{/if}
+		<div class="grid grid-cols-4 gap-1">
+			<button
+				onclick={() => setAIPlayer('off')}
+				class="px-2 py-1.5 text-xs font-medium rounded transition-all
+				       {analysisStore.aiPlaysAs === 'off'
+				         ? 'bg-[#3d3d3d] text-[#e8e8e8] border border-[#505050]'
+				         : 'bg-[#2d2d2d] text-[#a0a0a0] hover:bg-[#3d3d3d] hover:text-[#e8e8e8]'}"
+			>
+				Off
+			</button>
+			<button
+				onclick={() => setAIPlayer('black')}
+				class="px-2 py-1.5 text-xs font-medium rounded transition-all
+				       {analysisStore.aiPlaysAs === 'black'
+				         ? 'bg-[#3d3d3d] text-[#e8e8e8] border border-[#c084fc]'
+				         : 'bg-[#2d2d2d] text-[#a0a0a0] hover:bg-[#3d3d3d] hover:text-[#e8e8e8]'}"
+			>
+				Black
+			</button>
+			<button
+				onclick={() => setAIPlayer('white')}
+				class="px-2 py-1.5 text-xs font-medium rounded transition-all
+				       {analysisStore.aiPlaysAs === 'white'
+				         ? 'bg-[#3d3d3d] text-[#e8e8e8] border border-[#c084fc]'
+				         : 'bg-[#2d2d2d] text-[#a0a0a0] hover:bg-[#3d3d3d] hover:text-[#e8e8e8]'}"
+			>
+				White
+			</button>
+			<button
+				onclick={() => setAIPlayer('both')}
+				class="px-2 py-1.5 text-xs font-medium rounded transition-all
+				       {analysisStore.aiPlaysAs === 'both'
+				         ? 'bg-[#3d3d3d] text-[#e8e8e8] border border-[#c084fc]'
+				         : 'bg-[#2d2d2d] text-[#a0a0a0] hover:bg-[#3d3d3d] hover:text-[#e8e8e8]'}"
+			>
+				Both
+			</button>
+		</div>
+		{#if analysisStore.aiPlaysAs !== 'off'}
+			<p class="text-xs text-[#a0a0a0] mt-2">
+				{#if analysisStore.aiPlaysAs === 'both'}
+					AI plays both sides (watch mode)
+				{:else if analysisStore.aiPlaysAs === 'white'}
+					You play as Black, AI plays White
+				{:else}
+					You play as White, AI plays Black
+				{/if}
+			</p>
+		{/if}
+	</div>
 
 	{#if analysisStore.error}
 		<div class="error bg-[#7f1d1d] text-[#fca5a5] p-2 rounded mb-2 text-xs">
@@ -246,7 +285,11 @@
 				<button
 					onclick={playBestMove}
 					disabled={bestMoveSAN === '—'}
-					class="text-[#4ade80] font-bold text-center font-mono text-lg hover:text-[#22c55e] transition-colors cursor-pointer disabled:cursor-default disabled:hover:text-[#4ade80] px-2 py-1 rounded hover:bg-[#3d3d3d] active:bg-[#4d4d4d]"
+					class="{bestMoveSAN !== '—' && analysisStore.aiPlaysAs === 'off'
+					         ? 'text-[#4ade80] hover:text-[#22c55e] hover:bg-[#3d3d3d]'
+					         : 'text-[#4ade80]'}
+					       font-bold text-center font-mono text-lg transition-all cursor-pointer
+					       disabled:cursor-default disabled:text-[#505050] px-2 py-1 rounded active:bg-[#4d4d4d]"
 					title={bestMoveSAN !== '—' ? 'Click to play this move' : ''}
 				>
 					{bestMoveSAN}
@@ -311,8 +354,21 @@
 		}
 	}
 
+	@keyframes pulse {
+		0%, 100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.5;
+		}
+	}
+
 	.animate-spin {
 		animation: spin 1s linear infinite;
+	}
+
+	.animate-pulse {
+		animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 	}
 
 	.moves-container {

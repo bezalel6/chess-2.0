@@ -2,10 +2,12 @@ import { StockfishEngine } from '$lib/chess/engine/stockfish';
 import { engineConfigStore } from '$lib/stores/engineConfig.svelte';
 import type { AnalysisResult } from '$lib/types/stockfish';
 
+export type AIPlayerSide = 'off' | 'black' | 'white' | 'both';
+
 interface AnalysisState {
 	isAnalyzing: boolean;
 	isEnabled: boolean;
-	isAIMode: boolean;
+	aiPlaysAs: AIPlayerSide;
 	result: AnalysisResult | null;
 	error: string | null;
 }
@@ -16,12 +18,12 @@ class AnalysisStore {
 	private currentFen: string | null = null;
 	private messageHandler: ((line: string) => void) | null = null;
 	private storageKey = 'chess-analysis-enabled';
-	private aiModeStorageKey = 'chess-ai-mode-enabled';
+	private aiSideStorageKey = 'chess-ai-player-side';
 	private onBestMoveCallback: ((uciMove: string) => void) | null = null;
 	private state = $state<AnalysisState>({
 		isAnalyzing: false,
 		isEnabled: this.loadEnabledState(),
-		isAIMode: this.loadAIModeState(),
+		aiPlaysAs: this.loadAISide(),
 		result: null,
 		error: null
 	});
@@ -45,22 +47,32 @@ class AnalysisStore {
 		}
 	}
 
-	private loadAIModeState(): boolean {
-		if (typeof window === 'undefined') return false;
+	private loadAISide(): AIPlayerSide {
+		if (typeof window === 'undefined') return 'off';
 		try {
-			const stored = localStorage.getItem(this.aiModeStorageKey);
-			return stored === 'true';
+			const stored = localStorage.getItem(this.aiSideStorageKey);
+			if (stored === 'black' || stored === 'white' || stored === 'both') {
+				return stored;
+			}
+			// Migrate from old boolean AI mode
+			const oldAIMode = localStorage.getItem('chess-ai-mode-enabled');
+			if (oldAIMode === 'true') {
+				return 'both'; // Default old AI mode to both sides
+			}
+			return 'off';
 		} catch {
-			return false;
+			return 'off';
 		}
 	}
 
-	private saveAIModeState(enabled: boolean): void {
+	private saveAISide(side: AIPlayerSide): void {
 		if (typeof window === 'undefined') return;
 		try {
-			localStorage.setItem(this.aiModeStorageKey, String(enabled));
+			localStorage.setItem(this.aiSideStorageKey, side);
+			// Clean up old storage key
+			localStorage.removeItem('chess-ai-mode-enabled');
 		} catch (error) {
-			console.warn('Failed to save AI mode state to localStorage:', error);
+			console.warn('Failed to save AI side to localStorage:', error);
 		}
 	}
 
@@ -72,8 +84,12 @@ class AnalysisStore {
 		return this.state.isEnabled;
 	}
 
-	get isAIMode() {
-		return this.state.isAIMode;
+	get aiPlaysAs() {
+		return this.state.aiPlaysAs;
+	}
+
+	get isAIActive() {
+		return this.state.aiPlaysAs !== 'off';
 	}
 
 	get result() {
@@ -158,19 +174,29 @@ class AnalysisStore {
 			this.engine
 				.analyze(fen, (update) => {
 					this.state.result = { ...this.state.result, ...update } as AnalysisResult;
-					// Auto-play if AI mode is enabled and we have a best move with sufficient depth
-					if (this.state.isAIMode && this.onBestMoveCallback && !hasPlayedMove) {
-						const bestMove = update.bestMove || (update.pv && update.pv[0]);
-						const depth = update.depth || 0;
-						// Only play when we have a move and reached at least depth 10 for quality
-						if (bestMove && bestMove.length >= 4 && depth >= 10) {
-							hasPlayedMove = true; // Prevent multiple plays for same position
-							// Small delay to make the move visible
-							setTimeout(() => {
-								if (this.state.isAIMode && this.onBestMoveCallback) {
-									this.onBestMoveCallback(bestMove);
-								}
-							}, 300);
+
+					// Check if AI should play this position
+					if (this.state.aiPlaysAs !== 'off' && this.onBestMoveCallback && !hasPlayedMove) {
+						// Determine whose turn it is
+						const isWhiteTurn = fen.split(' ')[1] === 'w';
+						const shouldAIPlay =
+							this.state.aiPlaysAs === 'both' ||
+							(this.state.aiPlaysAs === 'white' && isWhiteTurn) ||
+							(this.state.aiPlaysAs === 'black' && !isWhiteTurn);
+
+						if (shouldAIPlay) {
+							const bestMove = update.bestMove || (update.pv && update.pv[0]);
+							const depth = update.depth || 0;
+							// Only play when we have a move and reached at least depth 10 for quality
+							if (bestMove && bestMove.length >= 4 && depth >= 10) {
+								hasPlayedMove = true; // Prevent multiple plays for same position
+								// Small delay to make the move visible
+								setTimeout(() => {
+									if (this.state.aiPlaysAs !== 'off' && this.onBestMoveCallback) {
+										this.onBestMoveCallback(bestMove);
+									}
+								}, 300);
+							}
 						}
 					}
 				})
@@ -228,25 +254,29 @@ class AnalysisStore {
 	async disable() {
 		await this.stopContinuousAnalysis();
 		this.state.isEnabled = false;
-		this.state.isAIMode = false; // Also disable AI mode when analysis is disabled
+		this.state.aiPlaysAs = 'off'; // Also disable AI when analysis is disabled
 		this.state.result = null;
 		this.saveEnabledState(false);
-		this.saveAIModeState(false);
+		this.saveAISide('off');
 	}
 
-	toggleAIMode() {
-		this.state.isAIMode = !this.state.isAIMode;
-		this.saveAIModeState(this.state.isAIMode);
-	}
+	async setAIPlayer(side: AIPlayerSide, fen?: string) {
+		const wasOff = this.state.aiPlaysAs === 'off';
+		this.state.aiPlaysAs = side;
+		this.saveAISide(side);
 
-	enableAIMode() {
-		this.state.isAIMode = true;
-		this.saveAIModeState(true);
-	}
-
-	disableAIMode() {
-		this.state.isAIMode = false;
-		this.saveAIModeState(false);
+		// Auto-enable analysis if turning AI on
+		if (side !== 'off' && !this.state.isEnabled) {
+			this.state.isEnabled = true;
+			this.saveEnabledState(true);
+			// Start analysis if we have a position
+			if (fen) {
+				await this.startContinuousAnalysis(fen);
+			}
+		} else if (side === 'off' && wasOff === false) {
+			// Optionally keep analysis running even when AI is off
+			// This allows users to see analysis without auto-play
+		}
 	}
 
 	setOnBestMoveCallback(callback: (uciMove: string) => void) {
@@ -282,7 +312,7 @@ class AnalysisStore {
 		this.state = {
 			isAnalyzing: false,
 			isEnabled: false,
-			isAIMode: false,
+			aiPlaysAs: 'off',
 			result: null,
 			error: null
 		};
