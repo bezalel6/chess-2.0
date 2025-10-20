@@ -193,18 +193,24 @@ class AnalysisStore {
 						if (shouldAIPlay) {
 							const bestMove = update.bestMove || (update.pv && update.pv[0]);
 							const depth = update.depth || 0;
-							console.log('Best move:', bestMove, 'depth:', depth);
-							// Only play when we have a move and reached at least depth 10 for quality
-							if (bestMove && bestMove.length >= 4 && depth >= 10) {
-								hasPlayedMove = true; // Prevent multiple plays for same position
-								console.log('Playing move after delay...');
-								// Small delay to make the move visible
-								setTimeout(() => {
-									if (this.state.aiPlaysAs !== 'off' && this.onBestMoveCallback) {
-										console.log('Calling callback with move:', bestMove);
-										this.onBestMoveCallback(bestMove);
-									}
-								}, 300);
+							console.log('Best move:', bestMove, 'depth:', depth, 'PV:', update.pv);
+
+							// Validate the move is in UCI format before trying to play it
+							if (bestMove && /^[a-h][1-8][a-h][1-8][qrbnQRBN]?$/.test(bestMove)) {
+								// Only play when we have a valid move and reached at least depth 10 for quality
+								if (depth >= 10) {
+									hasPlayedMove = true; // Prevent multiple plays for same position
+									console.log('Playing move after delay...');
+									// Small delay to make the move visible
+									setTimeout(() => {
+										if (this.state.aiPlaysAs !== 'off' && this.onBestMoveCallback) {
+											console.log('Calling callback with move:', bestMove);
+											this.onBestMoveCallback(bestMove);
+										}
+									}, 300);
+								}
+							} else if (bestMove) {
+								console.error('Best move is not in valid UCI format:', bestMove);
 							}
 						}
 					}

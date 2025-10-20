@@ -124,6 +124,22 @@
 	const autoPlayBestMove = (uciMove: string) => {
 		console.log('autoPlayBestMove called with:', uciMove, 'AI plays as:', analysisStore.aiPlaysAs);
 
+		// Validate UCI move format
+		if (!uciMove || uciMove.length < 4 || uciMove.length > 5) {
+			console.error('Invalid UCI move format:', uciMove);
+			return;
+		}
+
+		// Validate it's actually a UCI move (not SAN)
+		if (!/^[a-h][1-8][a-h][1-8][qrbnQRBN]?$/.test(uciMove)) {
+			console.error('Move is not in UCI format:', uciMove);
+			// Check if it might be SAN format
+			if (/^[KQRBN]/.test(uciMove) || /^[a-h]x/.test(uciMove) || /^\d/.test(uciMove)) {
+				console.error('Move appears to be in SAN format, expecting UCI');
+			}
+			return;
+		}
+
 		// Check if the game is not over
 		if (gameStore.status === 'checkmate' || gameStore.status === 'stalemate' || gameStore.status === 'draw') {
 			console.log('Game over, not playing move');
@@ -135,14 +151,19 @@
 		const to = uciMove.substring(2, 4);
 		const promotion = uciMove.length > 4 ? uciMove[4].toLowerCase() : undefined;
 
-		console.log('Attempting to play move:', from, to, promotion);
+		console.log('Attempting to play move:', from, to, promotion, 'Current FEN:', gameStore.fen);
 
 		// Play the move
-		const success = gameStore.makeMove(from as any, to as any, promotion);
-		if (success) {
-			console.log('Move played successfully');
-		} else {
-			console.log('Failed to play move');
+		try {
+			const success = gameStore.makeMove(from as any, to as any, promotion);
+			if (success) {
+				console.log('Move played successfully');
+			} else {
+				console.error('Failed to play move - move is illegal or invalid in current position');
+				console.log('Tried to move from', from, 'to', to, 'with promotion:', promotion);
+			}
+		} catch (error) {
+			console.error('Exception while playing move:', error);
 		}
 	};
 
