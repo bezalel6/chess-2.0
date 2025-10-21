@@ -275,7 +275,8 @@ export class StockfishEngine {
 		this.worker?.postMessage(`position fen ${fen}`);
 		await new Promise(resolve => setTimeout(resolve, 50));
 
-		const goCommand = moveTime ? `go movetime ${moveTime}` : `go depth ${depth || 20}`;
+		// For continuous analysis, use 'go infinite' unless a specific time/depth is requested
+		const goCommand = moveTime ? `go movetime ${moveTime}` : (depth ? `go depth ${depth}` : `go infinite`);
 
 		// Clear analysis buffer before starting
 		this.analysisBuffer = [];

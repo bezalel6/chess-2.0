@@ -190,8 +190,11 @@ class AnalysisStore {
 			let analysisStartTime = Date.now();
 			const MAX_WAIT_TIME = 5000; // Maximum 5 seconds to wait for AI move
 
+			// For continuous analysis, we don't wait for the promise to resolve
+			// as it will run indefinitely until stopped
 			this.engine
 				.analyze(fen, (update) => {
+					console.log('[AI Debug] Got engine update:', update);
 					// Ensure we're still analyzing the same position
 					if (this.currentFen !== analysisPositionFen) {
 						return;
@@ -214,6 +217,11 @@ class AnalysisStore {
 							const evaluation = update.evaluation;
 							const timeSinceStart = Date.now() - analysisStartTime;
 
+							// Debug: Log what we're getting from the engine
+							if (depth >= 6) {
+								console.log('[AI Debug] Update - bestMove:', update.bestMove, 'pv:', update.pv, 'depth:', depth, 'hasPlayed:', hasPlayedMove);
+							}
+
 							// Validate the move is in UCI format before trying to play it
 							if (bestMove && /^[a-h][1-8][a-h][1-8][qrbnQRBN]?$/.test(bestMove)) {
 								// Adaptive depth requirement based on position evaluation
@@ -224,6 +232,7 @@ class AnalysisStore {
 								const shouldPlayNow = depth >= requiredDepth || timeSinceStart > MAX_WAIT_TIME;
 
 								if (shouldPlayNow && depth >= 6) {
+									console.log('[AI Debug] About to play move:', bestMove, 'hasPlayedMove:', hasPlayedMove);
 									hasPlayedMove = true; // Prevent multiple plays for same position
 									// Small delay to make the move visible
 									setTimeout(() => {
@@ -231,25 +240,25 @@ class AnalysisStore {
 										if (this.currentFen === analysisPositionFen &&
 											this.state.aiPlaysAs !== 'off' &&
 											this.onBestMoveCallback) {
+											console.log('[AI Debug] Calling callback with:', bestMove);
 											this.onBestMoveCallback(bestMove);
+										} else {
+											console.log('[AI Debug] Not playing - position changed or AI off');
 										}
 									}, 300);
 								}
+							} else if (depth >= 6) {
+								console.log('[AI Debug] No valid move found - bestMove:', bestMove, 'format valid:', bestMove && /^[a-h][1-8][a-h][1-8][qrbnQRBN]?$/.test(bestMove));
 							}
 						}
 					}
 				})
-				.then((result) => {
-					this.state.result = result;
-				})
 				.catch((error) => {
+					// For continuous analysis, errors are less critical
+					console.log('[AI Debug] Analysis error (may be normal for continuous):', error);
 					if (error.message !== 'Analysis stopped' && error.message !== 'Engine not initialized') {
 						this.state.error = error instanceof Error ? error.message : 'Analysis failed';
-						console.error('Analysis error:', error);
 					}
-				})
-				.finally(() => {
-					this.state.isAnalyzing = false;
 				});
 		} catch (error) {
 			this.state.error = error instanceof Error ? error.message : 'Failed to start analysis';
