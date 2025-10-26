@@ -1,0 +1,113 @@
+{
+  "name": "Chess 2.0 Template",
+  "description": "Production-ready chess application with AI opponent",
+  "version": "2.0.0",
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/chess-2.0-template"
+  },
+  "templateConfig": {
+    "replacements": {
+      "chess-2.0": "{{projectName}}",
+      "Chess 2.0": "{{projectTitle}}",
+      "yourusername": "{{githubUsername}}"
+    },
+    "excludeFiles": [
+      ".git",
+      "node_modules",
+      "build",
+      ".svelte-kit",
+      "dist"
+    ],
+    "setupInstructions": [
+      "Update project name in package.json",
+      "Replace placeholder values in .template.config.json",
+      "Customize color scheme in components",
+      "Configure Stockfish engine settings",
+      "Add your own sound effects in static/sounds/",
+      "Update README with your project details"
+    ]
+  },
+  "features": {
+    "ai": {
+      "engine": "Stockfish 17.1 WASM",
+      "protocol": "UCI",
+      "modes": ["vs-white", "vs-black", "watch"],
+      "configurable": true
+    },
+    "ui": {
+      "framework": "SvelteKit 5",
+      "styling": "Tailwind CSS v4",
+      "board": "Chessground",
+      "responsive": true,
+      "darkMode": true
+    },
+    "game": {
+      "rules": "chess.js",
+      "notation": "Algebraic",
+      "formats": ["PGN", "FEN"],
+      "variants": ["standard"]
+    },
+    "analysis": {
+      "evaluation": true,
+      "bestMove": true,
+      "principalVariation": true,
+      "depth": "configurable"
+    },
+    "audio": {
+      "effects": ["move", "capture", "castle", "check", "promote", "game-end"],
+      "toggleable": true,
+      "persistent": true
+    }
+  },
+  "requirements": {
+    "node": ">=18.0.0",
+    "bun": ">=1.0.0",
+    "browser": {
+      "webWorkers": true,
+      "webAssembly": true,
+      "es2020": true
+    }
+  },
+  "customizationPoints": [
+    {
+      "name": "Color Scheme",
+      "files": ["src/app.css", "src/lib/components/**/*.svelte"],
+      "description": "Customize the dark theme colors and board appearance"
+    },
+    {
+      "name": "Engine Configuration",
+      "files": ["src/lib/stores/engineConfig.svelte.ts"],
+      "description": "Adjust AI strength, depth, and analysis settings"
+    },
+    {
+      "name": "Sound Effects",
+      "files": ["static/sounds/*.mp3", "src/lib/services/sounds.svelte.ts"],
+      "description": "Replace or add custom sound effects"
+    },
+    {
+      "name": "Game Variants",
+      "files": ["src/lib/chess/engine/game.ts"],
+      "description": "Extend GameEngine for chess variants"
+    },
+    {
+      "name": "Board Themes",
+      "files": ["src/lib/components/chess/Board.svelte"],
+      "description": "Customize board colors and piece sets"
+    }
+  ],
+  "extensionIdeas": [
+    "Opening book integration",
+    "Online multiplayer via WebSockets",
+    "Puzzle mode with problem sets",
+    "Game database with cloud storage",
+    "Tournament system",
+    "ELO rating calculation",
+    "Time controls and clocks",
+    "Analysis annotations",
+    "Chess variants (960, Three-check, etc.)",
+    "Endgame tablebase support"
+  ]
+}
