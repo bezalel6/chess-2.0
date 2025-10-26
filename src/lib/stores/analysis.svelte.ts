@@ -367,6 +367,17 @@ class AnalysisStore {
 		this.state.aiPlaysAs = side;
 		this.saveAISide(side);
 
+		// Don't start AI if game is already over
+		if (fen) {
+			const { GameEngine } = await import('$lib/chess/engine/game');
+			const testEngine = new GameEngine();
+			testEngine.load(fen);
+			if (testEngine.isGameOver()) {
+				console.log('[AI Debug] Cannot start AI - game is already over');
+				return;
+			}
+		}
+
 		// Auto-enable analysis if turning AI on
 		if (side !== 'off') {
 			if (!this.state.isEnabled) {

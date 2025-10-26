@@ -248,7 +248,11 @@
 	<div class="ai-section bg-[#1e1e1e] rounded-lg p-3 mb-3 border border-[#404040]">
 		<div class="flex items-center justify-between mb-2">
 			<h4 class="text-xs font-semibold text-[#e8e8e8]">AI Opponent</h4>
-			{#if analysisStore.isAIActive && analysisStore.isAnalyzing}
+			{#if gameStore.isGameOver}
+				<span class="text-xs text-[#505050] flex items-center gap-1">
+					Game Over
+				</span>
+			{:else if analysisStore.isAIActive && analysisStore.isAnalyzing}
 				<span class="text-xs text-[#4ade80] flex items-center gap-1">
 					<span class="inline-block w-1.5 h-1.5 bg-[#4ade80] rounded-full animate-pulse"></span>
 					AI thinking...
@@ -258,8 +262,11 @@
 		<div class="grid grid-cols-4 gap-1">
 			<button
 				onclick={() => setAIPlayer('off')}
+				disabled={gameStore.isGameOver}
 				class="px-2 py-1.5 text-xs font-medium rounded transition-all
-				       {analysisStore.aiPlaysAs === 'off'
+				       {gameStore.isGameOver
+				         ? 'bg-[#2d2d2d] text-[#505050] cursor-not-allowed'
+				         : analysisStore.aiPlaysAs === 'off'
 				         ? 'bg-[#3d3d3d] text-[#e8e8e8] border border-[#505050]'
 				         : 'bg-[#2d2d2d] text-[#a0a0a0] hover:bg-[#3d3d3d] hover:text-[#e8e8e8]'}"
 			>
@@ -267,8 +274,11 @@
 			</button>
 			<button
 				onclick={() => setAIPlayer('black')}
+				disabled={gameStore.isGameOver}
 				class="px-2 py-1.5 text-xs font-medium rounded transition-all
-				       {analysisStore.aiPlaysAs === 'black'
+				       {gameStore.isGameOver
+				         ? 'bg-[#2d2d2d] text-[#505050] cursor-not-allowed'
+				         : analysisStore.aiPlaysAs === 'black'
 				         ? 'bg-[#3d3d3d] text-[#e8e8e8] border border-[#c084fc]'
 				         : 'bg-[#2d2d2d] text-[#a0a0a0] hover:bg-[#3d3d3d] hover:text-[#e8e8e8]'}"
 			>
@@ -276,8 +286,11 @@
 			</button>
 			<button
 				onclick={() => setAIPlayer('white')}
+				disabled={gameStore.isGameOver}
 				class="px-2 py-1.5 text-xs font-medium rounded transition-all
-				       {analysisStore.aiPlaysAs === 'white'
+				       {gameStore.isGameOver
+				         ? 'bg-[#2d2d2d] text-[#505050] cursor-not-allowed'
+				         : analysisStore.aiPlaysAs === 'white'
 				         ? 'bg-[#3d3d3d] text-[#e8e8e8] border border-[#c084fc]'
 				         : 'bg-[#2d2d2d] text-[#a0a0a0] hover:bg-[#3d3d3d] hover:text-[#e8e8e8]'}"
 			>
@@ -285,15 +298,18 @@
 			</button>
 			<button
 				onclick={() => setAIPlayer('both')}
+				disabled={gameStore.isGameOver}
 				class="px-2 py-1.5 text-xs font-medium rounded transition-all
-				       {analysisStore.aiPlaysAs === 'both'
+				       {gameStore.isGameOver
+				         ? 'bg-[#2d2d2d] text-[#505050] cursor-not-allowed'
+				         : analysisStore.aiPlaysAs === 'both'
 				         ? 'bg-[#3d3d3d] text-[#e8e8e8] border border-[#c084fc]'
 				         : 'bg-[#2d2d2d] text-[#a0a0a0] hover:bg-[#3d3d3d] hover:text-[#e8e8e8]'}"
 			>
 				Both
 			</button>
 		</div>
-		{#if analysisStore.aiPlaysAs !== 'off'}
+		{#if !gameStore.isGameOver && analysisStore.aiPlaysAs !== 'off'}
 			<p class="text-xs text-[#a0a0a0] mt-2">
 				{#if analysisStore.aiPlaysAs === 'both'}
 					AI plays both sides (watch mode)
@@ -302,6 +318,10 @@
 				{:else}
 					You play as White, AI plays Black
 				{/if}
+			</p>
+		{:else if gameStore.isGameOver && analysisStore.aiPlaysAs !== 'off'}
+			<p class="text-xs text-[#505050] mt-2">
+				AI inactive - game has ended
 			</p>
 		{/if}
 	</div>
@@ -314,7 +334,51 @@
 
 	<!-- Content Container with Fixed Layout -->
 	<div class="analysis-content min-h-[160px]">
-		{#if analysisStore.result && analysisStore.isEnabled}
+		{#if gameStore.isGameOver}
+			<!-- Game Over State -->
+			<div class="game-over-state flex flex-col items-center justify-center min-h-[160px] gap-3 fade-in">
+				<!-- Game Result Icon and Text -->
+				<div class="text-center">
+					{#if gameStore.isCheckmate}
+						<div class="text-4xl mb-2 scale-in">♔</div>
+						<div class="text-lg font-bold text-[#e8e8e8] mb-1">Checkmate!</div>
+						<div class="text-sm text-[#a0a0a0]">
+							{gameStore.turn === 'w' ? 'Black' : 'White'} wins
+						</div>
+					{:else if gameStore.isStalemate}
+						<div class="text-4xl mb-2 scale-in">½</div>
+						<div class="text-lg font-bold text-[#facc15] mb-1">Stalemate</div>
+						<div class="text-sm text-[#a0a0a0]">Draw by stalemate</div>
+					{:else if gameStore.isDraw}
+						<div class="text-4xl mb-2 scale-in">½</div>
+						<div class="text-lg font-bold text-[#facc15] mb-1">Draw</div>
+						<div class="text-sm text-[#a0a0a0]">
+							{#if gameStore.status === 'insufficient-material'}
+								Insufficient material
+							{:else if gameStore.status === 'threefold-repetition'}
+								Threefold repetition
+							{:else}
+								Game drawn
+							{/if}
+						</div>
+					{/if}
+				</div>
+
+				<!-- Final evaluation if available -->
+				{#if analysisStore.result}
+					{@const result = analysisStore.result}
+					{@const whiteToMove = isWhiteToMove(gameStore.fen)}
+					{@const whiteEval = whiteToMove ? result.evaluation : -result.evaluation}
+					{@const whiteMate = whiteToMove ? result.mate : result.mate ? -result.mate : undefined}
+					<div class="text-center">
+						<div class="text-xs text-[#a0a0a0] mb-1">Final Evaluation</div>
+						<div class="text-2xl font-bold text-[#e8e8e8] font-mono">
+							{formatEvaluation(whiteEval, whiteMate)}
+						</div>
+					</div>
+				{/if}
+			</div>
+		{:else if analysisStore.result && analysisStore.isEnabled}
 			{@const result = analysisStore.result}
 			{@const whiteToMove = isWhiteToMove(gameStore.fen)}
 			{@const whiteEval = whiteToMove ? result.evaluation : -result.evaluation}
@@ -443,5 +507,33 @@
 	.moves-container::-webkit-scrollbar-thumb {
 		background: #404040;
 		border-radius: 2px;
+	}
+
+	.fade-in {
+		animation: fadeIn 0.5s ease-in;
+	}
+
+	.scale-in {
+		animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+	}
+
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
+	@keyframes scaleIn {
+		from {
+			transform: scale(0);
+			opacity: 0;
+		}
+		to {
+			transform: scale(1);
+			opacity: 1;
+		}
 	}
 </style>
