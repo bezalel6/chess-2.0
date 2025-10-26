@@ -122,16 +122,19 @@
 	const autoPlayBestMove = (uciMove: string) => {
 		// Validate UCI move format
 		if (!uciMove || uciMove.length < 4 || uciMove.length > 5) {
+			console.log('[AI Debug] Invalid move length:', uciMove);
 			return;
 		}
 
 		// Validate it's actually a UCI move (not SAN)
 		if (!/^[a-h][1-8][a-h][1-8][qrbnQRBN]?$/.test(uciMove)) {
+			console.log('[AI Debug] Invalid UCI format:', uciMove);
 			return;
 		}
 
 		// Check if the game is over (handles all draw types, checkmate, stalemate)
 		if (gameStore.isGameOver) {
+			console.log('[AI Debug] Game is over, not playing move');
 			return;
 		}
 
@@ -143,23 +146,45 @@
 		// Verify the move is legal in the current position
 		const testEngine = new GameEngine();
 		try {
-			testEngine.load(gameStore.fen);
+			const currentFen = gameStore.fen;
+			testEngine.load(currentFen);
+
+			// Double-check it's the right turn
+			const isWhiteToMove = currentFen.split(' ')[1] === 'w';
+			const pieceAtFrom = testEngine.getSquare(from as any);
+			if (!pieceAtFrom) {
+				console.log('[AI Debug] No piece at from square:', from);
+				return;
+			}
+
+			// Ensure we're not trying to move the opponent's piece
+			if ((isWhiteToMove && pieceAtFrom.color !== 'w') ||
+			    (!isWhiteToMove && pieceAtFrom.color !== 'b')) {
+				console.log('[AI Debug] Wrong color piece at from square');
+				return;
+			}
+
 			const testMove = testEngine.move(from as any, to as any, promotion);
 			if (!testMove) {
+				console.log('[AI Debug] Move validation failed:', uciMove);
 				return;
 			}
 		} catch (error) {
+			console.log('[AI Debug] Error validating move:', error);
 			return;
 		}
 
 		// Play the move
 		try {
+			console.log('[AI Debug] Playing validated move:', uciMove);
 			const success = gameStore.makeMove(from as any, to as any, promotion);
 			if (!success) {
-				console.error('Failed to play AI move:', uciMove);
+				console.error('[AI Debug] Failed to play AI move:', uciMove);
+			} else {
+				console.log('[AI Debug] Successfully played AI move:', uciMove);
 			}
 		} catch (error) {
-			console.error('Exception while playing AI move:', error);
+			console.error('[AI Debug] Exception while playing AI move:', error);
 		}
 	};
 

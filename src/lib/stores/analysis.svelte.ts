@@ -20,6 +20,8 @@ class AnalysisStore {
 	private storageKey = 'chess-analysis-enabled';
 	private aiSideStorageKey = 'chess-ai-player-side';
 	private onBestMoveCallback: ((uciMove: string) => void) | null = null;
+	private currentAnalysisId = 0; // Unique ID for each analysis session
+	private analysisInterval: ReturnType<typeof setInterval> | null = null; // Track interval for cleanup
 	private state = $state<AnalysisState>({
 		isAnalyzing: false,
 		isEnabled: this.loadEnabledState(),
@@ -180,6 +182,10 @@ class AnalysisStore {
 				return;
 			}
 
+			// Generate unique ID for this analysis session
+			this.currentAnalysisId++;
+			const thisAnalysisId = this.currentAnalysisId;
+
 			this.currentFen = fen;
 			this.state.isAnalyzing = true;
 			this.state.isEnabled = true;
@@ -188,15 +194,21 @@ class AnalysisStore {
 			let hasPlayedMove = false; // Track if we've already played a move for this position
 			const analysisPositionFen = fen; // Capture the position we're analyzing
 			let analysisStartTime = Date.now();
-			const MAX_WAIT_TIME = 5000; // Maximum 5 seconds to wait for AI move
+			const MAX_WAIT_TIME = 3000; // Reduced from 5000ms for better responsiveness
 
 			// For continuous analysis, we don't wait for the promise to resolve
 			// as it will run indefinitely until stopped
 			this.engine
 				.analyze(fen, (update) => {
-					console.log('[AI Debug] Got engine update:', update);
-					// Ensure we're still analyzing the same position
+					// Check if this callback is from the current analysis session
+					if (thisAnalysisId !== this.currentAnalysisId) {
+						console.log('[AI Debug] Ignoring update from old analysis session', thisAnalysisId, 'current:', this.currentAnalysisId);
+						return;
+					}
+
+					// Also ensure we're still analyzing the same position
 					if (this.currentFen !== analysisPositionFen) {
+						console.log('[AI Debug] Position mismatch, ignoring update');
 						return;
 					}
 
@@ -232,18 +244,21 @@ class AnalysisStore {
 								const shouldPlayNow = depth >= requiredDepth || timeSinceStart > MAX_WAIT_TIME;
 
 								if (shouldPlayNow && depth >= 6) {
-									console.log('[AI Debug] About to play move:', bestMove, 'hasPlayedMove:', hasPlayedMove);
+									console.log('[AI Debug] About to play move:', bestMove, 'depth:', depth, 'eval:', evaluation);
 									hasPlayedMove = true; // Prevent multiple plays for same position
 									// Small delay to make the move visible
 									setTimeout(() => {
-										// Double-check we're still in the same position before playing
-										if (this.currentFen === analysisPositionFen &&
+										// Triple-check we're still in the correct analysis session and position
+										if (thisAnalysisId === this.currentAnalysisId &&
+											this.currentFen === analysisPositionFen &&
 											this.state.aiPlaysAs !== 'off' &&
 											this.onBestMoveCallback) {
-											console.log('[AI Debug] Calling callback with:', bestMove);
+											console.log('[AI Debug] Playing move:', bestMove, 'session:', thisAnalysisId);
 											this.onBestMoveCallback(bestMove);
 										} else {
-											console.log('[AI Debug] Not playing - position changed or AI off');
+											console.log('[AI Debug] Not playing - session or position changed',
+												'session match:', thisAnalysisId === this.currentAnalysisId,
+												'position match:', this.currentFen === analysisPositionFen);
 										}
 									}, 300);
 								}
@@ -268,30 +283,47 @@ class AnalysisStore {
 	}
 
 	async updatePosition(fen: string) {
-		if (this.state.isEnabled && fen !== this.currentFen) {
-			// Check if the new position is a game over state
-			const { GameEngine } = await import('$lib/chess/engine/game');
-			const testEngine = new GameEngine();
-			testEngine.load(fen);
-
-			if (testEngine.isGameOver()) {
-				await this.stopContinuousAnalysis();
-				this.state.result = null;
-				return;
-			}
-
-			// Stop any ongoing analysis first to prevent stale results
-			await this.stopContinuousAnalysis();
-			// Clear any previous results when position changes
-			this.state.result = null;
-			// Small delay to ensure engine is fully stopped
-			await new Promise(resolve => setTimeout(resolve, 100));
-			// Start fresh analysis for the new position
-			await this.startContinuousAnalysis(fen);
+		// Only process if enabled and position actually changed
+		if (!this.state.isEnabled) {
+			return;
 		}
+
+		// Check if position has actually changed
+		if (fen === this.currentFen) {
+			return;
+		}
+
+		console.log('[AI Debug] Position update from', this.currentFen?.substring(0, 20), 'to', fen.substring(0, 20));
+
+		// Check if the new position is a game over state
+		const { GameEngine } = await import('$lib/chess/engine/game');
+		const testEngine = new GameEngine();
+		testEngine.load(fen);
+
+		if (testEngine.isGameOver()) {
+			console.log('[AI Debug] Game over detected, stopping analysis');
+			await this.stopContinuousAnalysis();
+			this.state.result = null;
+			return;
+		}
+
+		// Stop any ongoing analysis first to prevent stale results
+		await this.stopContinuousAnalysis();
+		// Clear any previous results when position changes
+		this.state.result = null;
+
+		// Small delay to ensure engine is fully stopped before restarting
+		// This helps prevent race conditions with rapid position changes
+		await new Promise(resolve => setTimeout(resolve, 150));
+
+		// Start fresh analysis for the new position
+		await this.startContinuousAnalysis(fen);
 	}
 
 	async stopContinuousAnalysis() {
+		// Increment analysis ID to invalidate any pending callbacks
+		this.currentAnalysisId++;
+
 		if (this.engine) {
 			try {
 				await this.engine.stop();
@@ -299,6 +331,10 @@ class AnalysisStore {
 				console.error('Error stopping analysis:', error);
 			}
 		}
+
+		// Clear any stored interval (will be handled in stockfish.ts)
+		this.analysisInterval = null;
+
 		this.state.isAnalyzing = false;
 		this.currentFen = null;
 	}

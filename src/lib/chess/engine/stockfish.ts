@@ -17,6 +17,7 @@ export class StockfishEngine {
 	private messageBuffer: string[] = [];
 	private analysisBuffer: string[] = []; // Separate buffer for analysis info lines
 	private isInitialized = false;
+	private analysisInterval: ReturnType<typeof setInterval> | null = null; // Track interval for cleanup
 
 	constructor(private config: EngineConfig = {}) {}
 
@@ -284,8 +285,14 @@ export class StockfishEngine {
 		// Send go command and wait for bestmove
 		const analysisPromise = this.sendCommand(goCommand, /^bestmove/);
 
+		// Clear any existing interval before creating a new one
+		if (this.analysisInterval) {
+			clearInterval(this.analysisInterval);
+			this.analysisInterval = null;
+		}
+
 		// Process analysis updates from the separate buffer
-		const interval = setInterval(() => {
+		this.analysisInterval = setInterval(() => {
 			if (this.analysisBuffer.length > 0) {
 				const lines = [...this.analysisBuffer];
 				this.analysisBuffer = []; // Clear after copying
@@ -302,11 +309,14 @@ export class StockfishEngine {
 					onUpdate(result);
 				}
 			}
-		}, 100); // Update more frequently for smoother feedback
+		}, 250); // Increased from 100ms to reduce CPU usage while maintaining responsiveness
 
 		try {
 			const response = await analysisPromise;
-			clearInterval(interval);
+			if (this.analysisInterval) {
+				clearInterval(this.analysisInterval);
+				this.analysisInterval = null;
+			}
 
 			// Process final response
 			const lines = response.split('\n');
@@ -333,7 +343,10 @@ export class StockfishEngine {
 
 			return result as AnalysisResult;
 		} catch (error) {
-			clearInterval(interval);
+			if (this.analysisInterval) {
+				clearInterval(this.analysisInterval);
+				this.analysisInterval = null;
+			}
 			this.analysisBuffer = [];
 			throw error;
 		}
@@ -358,25 +371,55 @@ export class StockfishEngine {
 		}
 
 		try {
+			// Clear any pending analysis interval
+			if (this.analysisInterval) {
+				clearInterval(this.analysisInterval);
+				this.analysisInterval = null;
+			}
+
 			// Clear any pending analysis
 			this.analysisBuffer = [];
 
-			// Send stop command directly - it may not always return bestmove
-			// If there's no active search, Stockfish won't send anything
-			this.worker.postMessage('stop');
-
-			// Give it a moment to stop
-			await new Promise(resolve => setTimeout(resolve, 100));
-
-			// Clear any current command that might be waiting
+			// If there's an active go command, we need to handle it properly
 			if (this.currentCommand && this.currentCommand.command.startsWith('go')) {
-				this.currentCommand.resolve('stopped');
-				this.currentCommand = null;
-				this.isProcessing = false;
-				this.processNextCommand();
-			}
+				// Send stop command
+				this.worker.postMessage('stop');
 
-			return 'stopped';
+				// Create a promise to wait for bestmove with timeout
+				const stopPromise = new Promise<string>((resolve) => {
+					const stopTimeout = setTimeout(() => {
+						// If no bestmove after 500ms, force resolve
+						console.log('[UCI Debug] Stop timeout - forcing resolution');
+						if (this.currentCommand && this.currentCommand.command.startsWith('go')) {
+							this.currentCommand.resolve('stopped_by_timeout');
+							this.currentCommand = null;
+							this.isProcessing = false;
+							this.processNextCommand();
+						}
+						resolve('stopped_by_timeout');
+					}, 500);
+
+					// Store original handler
+					const originalCommand = this.currentCommand;
+					if (originalCommand) {
+						// Replace the resolve to clear timeout
+						const originalResolve = originalCommand.resolve;
+						originalCommand.resolve = (value) => {
+							clearTimeout(stopTimeout);
+							originalResolve(value);
+							resolve(value);
+						};
+					}
+				});
+
+				const result = await stopPromise;
+				return result;
+			} else {
+				// No active command, just send stop to be safe
+				this.worker.postMessage('stop');
+				await new Promise(resolve => setTimeout(resolve, 100));
+				return 'stopped';
+			}
 		} catch (error) {
 			console.error('Error stopping analysis:', error);
 			return null;
