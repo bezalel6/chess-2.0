@@ -1,118 +1,99 @@
 # Chess 2.0
 
-A modern chess application with professional Stockfish analysis. Clean, minimal interface with powerful features.
+Modern chess application with AI opponent. Built with SvelteKit 5 and Stockfish engine.
 
-## Tech Stack
-
-- **Framework**: SvelteKit 2.43.2 with Svelte 5.39.5 (using new runes system)
-- **Language**: TypeScript 5.9.2
-- **Styling**: Tailwind CSS 4.1.14
-- **Chess Logic**: chess.js 1.0.0
-- **Board UI**: chessground 9.0.0
-- **Analysis Engine**: Stockfish 17.1 (WASM multithreaded)
-
-## Installation
-
-```bash
-bun install
-```
-
-## Development
-
-```bash
-bun run dev
-```
-
-Navigate to `http://localhost:5173`
-
-## Build
-
-```bash
-bun run build
-```
-
-Builds the application using `@sveltejs/adapter-node` for self-hosting. Creates a production-ready Node.js server in the `build/` directory.
-
-## Deployment
-
-### Self-Hosting (Node.js)
-
-The project is configured for self-hosting with adapter-node:
-
-```bash
-bun run build
-node build  # Runs on port 3000 by default
-```
-
-Environment variables:
-- `PORT` - Server port (default: 3000)
-- `HOST` - Server host (default: 0.0.0.0)
-- `ORIGIN` - Origin URL for CSRF protection
-
-### GitHub Pages
-
-For static deployment to GitHub Pages, switch to `@sveltejs/adapter-static` in `svelte.config.js`.
-
-### Local Preview
-
-```bash
-bun run build
-bun run preview  # Preview production build locally
-```
+🎮 **[Play Now](http://localhost:5173)** | 📦 **[Use as Template](#template)**
 
 ## Features
 
-### Core Chess
-- Full chess rules implementation with chess.js
-- Interactive drag-and-drop board using chessground
-- Lichess.org blue board theme
-- Legal move highlighting and validation
-- Check, checkmate, and stalemate detection
-- Pawn promotion dialog with piece selection
+- **Play vs AI** - Stockfish 17.1 engine (White/Black/Both)
+- **Real-time Analysis** - Best moves and evaluation
+- **Complete Chess Rules** - Full implementation with legal moves
+- **Modern UI** - Dark theme, sound effects, responsive design
+- **PGN/FEN Support** - Import and export games
 
-### Engine & Analysis
-- **Stockfish 17.1 WASM** - Multithreaded engine running entirely in the browser
-- **Real-time Position Analysis** - Continuous evaluation as you play
-- **Interactive Best Move** - Click the suggested move to play it instantly
-- **Evaluation Display** - Centipawn and mate evaluations from current player's perspective
-- **Principal Variation** - Shows best continuation line with SAN notation
-- **Analysis Metrics** - Depth, nodes searched, and nodes per second
-- **Configurable Settings** - Adjustable search depth, threads, and hash size
-- **Persistent State** - Analysis preferences saved to localStorage
+## Quick Start
 
-### UI & UX
-- **Modern Dark Theme** - Cohesive color palette optimized for long sessions
-- **Responsive Layout** - Adapts seamlessly to desktop and mobile devices
-- **Move History Panel** - Scrollable list with standard chess notation
-- **Sound Effects** - Move, capture, and check sounds (can play simultaneously)
-- **Game Controls** - New game, undo move, and position management
-- **FEN Support** - Import and export positions using FEN notation
-- **Turn Indicator** - Clear display of whose turn it is
-- **Status Display** - Shows check, checkmate, stalemate, and draw states
-- **Testimonials** - Rotating quotes from chess personalities (with humor)
+```bash
+# Install and run
+bun install
+bun run dev
+```
 
-## Usage & Interactions
+## Template
 
-### Playing Chess
-- **Drag and Drop** - Click and drag pieces to make moves
-- **Click-Click** - Click a piece, then click destination square
-- **Legal Moves** - Highlighted automatically when you select a piece
-- **Pawn Promotion** - Modal dialog appears for piece selection
+Use Chess 2.0 as a base for your chess projects:
 
-### Analysis Features
-- **Toggle Analysis** - Use the on/off switch in the Analysis panel
-- **Play Best Move** - Click the green move suggestion to play it instantly
-- **View Best Line** - See the engine's recommended continuation
-- **Evaluation Bar** - Positive values favor White, negative favor Black
+```bash
+bun scripts/init-template.js
+```
 
-### Keyboard Shortcuts
-- None currently implemented (all interactions are click/touch based)
+See [TEMPLATE_GUIDE.md](TEMPLATE_GUIDE.md) for customization options.
 
-## Technical Notes
+## Tech Stack
 
-- Built with **Svelte 5's new runes system** (`$state`, `$derived`, `$effect`) for reactive state management
-- Uses **immutable update patterns** to ensure proper reactivity with chess.js
-- **Version counter pattern** for triggering updates with non-reactive libraries
-- **Web Workers** for Stockfish engine to prevent UI blocking
-- **WASM multithreading** for maximum engine performance
-- **UCI protocol** implementation for engine communication
+- **SvelteKit 5** - With new runes (`$state`, `$props`, `$derived`)
+- **TypeScript** - Strict mode
+- **Tailwind CSS v4** - Modern styling
+- **Chess.js** - Game logic
+- **Chessground** - Board UI
+- **Stockfish WASM** - Chess engine
+
+## Commands
+
+```bash
+bun run dev      # Development
+bun run build    # Production build
+bun run preview  # Preview build
+bun test:all     # Run tests
+```
+
+## Project Structure
+
+```
+src/
+├── lib/
+│   ├── chess/       # Engine wrappers
+│   ├── components/  # UI components
+│   ├── stores/      # State management
+│   └── services/    # Sound, etc.
+└── routes/          # Pages
+```
+
+## Deployment
+
+```bash
+# Node.js
+bun run build
+PORT=3000 node build
+
+# Static (Vercel/Netlify)
+bun run build
+# Deploy 'build' folder
+```
+
+## Customization
+
+### Board Colors
+Edit `src/lib/components/chess/Board.svelte`
+
+### AI Strength
+Edit `src/lib/stores/engineConfig.svelte.ts`
+
+### Sound Effects
+Replace files in `static/sounds/`
+
+## Contributing
+
+1. Fork the repo
+2. Create feature branch
+3. Run tests
+4. Submit PR
+
+## License
+
+MIT
+
+---
+
+Built with ❤️ using [Stockfish](https://stockfishchess.org), [Chessground](https://github.com/lichess-org/chessground), and [Chess.js](https://github.com/jhlywa/chess.js)
