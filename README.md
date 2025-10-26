@@ -20,15 +20,19 @@ bun install
 bun run dev
 ```
 
-## Template
+## Use as Template
 
-Use Chess 2.0 as a base for your chess projects:
-
+### GitHub Template (Recommended)
+Use the **template** branch for a clean starting point:
 ```bash
-bun scripts/init-template.js
+git clone -b template https://github.com/bezalel6/chess-2.0.git my-chess-app
+cd my-chess-app
+bun install
+bun run dev
 ```
 
-See [TEMPLATE_GUIDE.md](TEMPLATE_GUIDE.md) for customization options.
+### Current Version
+This main branch contains the full Chess 2.0 application with all features and documentation.
 
 ## Tech Stack
 
