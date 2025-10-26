@@ -1,99 +1,127 @@
-# Chess 2.0
+# Chess App Template
 
-Modern chess application with AI opponent. Built with SvelteKit 5 and Stockfish engine.
+A production-ready chess application template with AI opponent powered by Stockfish.
 
-🎮 **[Play Now](http://localhost:5173)** | 📦 **[Use as Template](#template)**
+## 🚀 Quick Start
 
-## Features
-
-- **Play vs AI** - Stockfish 17.1 engine (White/Black/Both)
-- **Real-time Analysis** - Best moves and evaluation
-- **Complete Chess Rules** - Full implementation with legal moves
-- **Modern UI** - Dark theme, sound effects, responsive design
-- **PGN/FEN Support** - Import and export games
-
-## Quick Start
+Click **"Use this template"** button above, then:
 
 ```bash
+# Clone your new repository
+git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+cd YOUR_REPO_NAME
+
 # Install and run
 bun install
 bun run dev
 ```
 
-## Template
+## ✨ Features
 
-Use Chess 2.0 as a base for your chess projects:
+Out of the box, you get:
 
-```bash
-bun scripts/init-template.js
-```
+- ♟️ **Complete chess implementation** with all rules
+- 🤖 **AI opponent** using Stockfish 17.1 WASM
+- 🎨 **Modern dark UI** with responsive design
+- 🔊 **Sound effects** for all move types
+- 📊 **Real-time analysis** with best moves
+- 📝 **PGN/FEN** import and export
 
-See [TEMPLATE_GUIDE.md](TEMPLATE_GUIDE.md) for customization options.
+## 🛠️ Tech Stack
 
-## Tech Stack
+- **SvelteKit 5** - Modern web framework with runes
+- **TypeScript** - Type safety throughout
+- **Tailwind CSS v4** - Utility-first styling
+- **Chess.js** - Move validation and game logic
+- **Chessground** - Interactive board from Lichess
+- **Stockfish WASM** - Chess engine in the browser
 
-- **SvelteKit 5** - With new runes (`$state`, `$props`, `$derived`)
-- **TypeScript** - Strict mode
-- **Tailwind CSS v4** - Modern styling
-- **Chess.js** - Game logic
-- **Chessground** - Board UI
-- **Stockfish WASM** - Chess engine
-
-## Commands
-
-```bash
-bun run dev      # Development
-bun run build    # Production build
-bun run preview  # Preview build
-bun test:all     # Run tests
-```
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 src/
 ├── lib/
-│   ├── chess/       # Engine wrappers
-│   ├── components/  # UI components
+│   ├── chess/       # Chess engine integration
+│   ├── components/  # Reusable UI components
 │   ├── stores/      # State management
-│   └── services/    # Sound, etc.
-└── routes/          # Pages
+│   └── services/    # Sound and utilities
+└── routes/          # App pages
 ```
 
-## Deployment
+## 🎨 Customization
+
+### Change Colors
+
+Edit theme in `src/app.css` or component styles:
+
+```css
+/* Your brand colors */
+--primary: #your-color;
+--background: #your-bg;
+```
+
+### Adjust AI Difficulty
+
+Edit `src/lib/stores/engineConfig.svelte.ts`:
+
+```typescript
+export const engineConfig = {
+  depth: 10,      // 1-20 (higher = stronger)
+  moveTime: 2000  // milliseconds per move
+};
+```
+
+### Add Features
+
+Common extensions:
+
+- **Multiplayer**: Add WebSocket/WebRTC support
+- **Puzzles**: Create puzzle mode with positions
+- **Time Controls**: Add chess clocks
+- **Variants**: Implement Chess960, etc.
+- **Database**: Save games to backend
+
+## 📦 Build & Deploy
 
 ```bash
-# Node.js
+# Build for production
 bun run build
+
+# Deploy to Node.js
 PORT=3000 node build
 
-# Static (Vercel/Netlify)
-bun run build
-# Deploy 'build' folder
+# Or deploy to Vercel/Netlify (static)
+# Upload the 'build' folder
 ```
 
-## Customization
+## 🤝 Contributing
 
-### Board Colors
-Edit `src/lib/components/chess/Board.svelte`
+This is a template repository. Feel free to:
 
-### AI Strength
-Edit `src/lib/stores/engineConfig.svelte.ts`
+1. Use it for any purpose (MIT license)
+2. Modify without attribution
+3. Share your improvements
 
-### Sound Effects
-Replace files in `static/sounds/`
+## 📝 Notes
 
-## Contributing
+- Stockfish requires same-origin hosting (CORS)
+- Minimum browser: Chrome 90+, Firefox 88+, Safari 15+
+- Mobile performance: Limit engine threads
 
-1. Fork the repo
-2. Create feature branch
-3. Run tests
-4. Submit PR
+## 🚦 Getting Started Checklist
 
-## License
+After using this template:
 
-MIT
+- [ ] Update `package.json` with your project name
+- [ ] Customize the color theme
+- [ ] Adjust AI difficulty settings
+- [ ] Add your own features
+- [ ] Update this README for your project
+
+## 📄 License
+
+MIT - Use freely for any purpose
 
 ---
 
-Built with ❤️ using [Stockfish](https://stockfishchess.org), [Chessground](https://github.com/lichess-org/chessground), and [Chess.js](https://github.com/jhlywa/chess.js)
+*Built with SvelteKit, Stockfish, and ❤️*

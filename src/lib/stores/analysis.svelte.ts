@@ -151,7 +151,6 @@ class AnalysisStore {
 			this.state.result = result;
 		} catch (error) {
 			this.state.error = error instanceof Error ? error.message : 'Analysis failed';
-			console.error('Analysis error:', error);
 		} finally {
 			this.state.isAnalyzing = false;
 		}
@@ -202,13 +201,11 @@ class AnalysisStore {
 				.analyze(fen, (update) => {
 					// Check if this callback is from the current analysis session
 					if (thisAnalysisId !== this.currentAnalysisId) {
-						console.log('[AI Debug] Ignoring update from old analysis session', thisAnalysisId, 'current:', this.currentAnalysisId);
 						return;
 					}
 
 					// Also ensure we're still analyzing the same position
 					if (this.currentFen !== analysisPositionFen) {
-						console.log('[AI Debug] Position mismatch, ignoring update');
 						return;
 					}
 
@@ -229,10 +226,6 @@ class AnalysisStore {
 							const evaluation = update.evaluation;
 							const timeSinceStart = Date.now() - analysisStartTime;
 
-							// Debug: Log what we're getting from the engine
-							if (depth >= 6) {
-								console.log('[AI Debug] Update - bestMove:', update.bestMove, 'pv:', update.pv, 'depth:', depth, 'hasPlayed:', hasPlayedMove);
-							}
 
 							// Validate the move is in UCI format before trying to play it
 							if (bestMove && /^[a-h][1-8][a-h][1-8][qrbnQRBN]?$/.test(bestMove)) {
@@ -244,7 +237,6 @@ class AnalysisStore {
 								const shouldPlayNow = depth >= requiredDepth || timeSinceStart > MAX_WAIT_TIME;
 
 								if (shouldPlayNow && depth >= 6) {
-									console.log('[AI Debug] About to play move:', bestMove, 'depth:', depth, 'eval:', evaluation);
 									hasPlayedMove = true; // Prevent multiple plays for same position
 									// Small delay to make the move visible
 									setTimeout(() => {
@@ -253,24 +245,16 @@ class AnalysisStore {
 											this.currentFen === analysisPositionFen &&
 											this.state.aiPlaysAs !== 'off' &&
 											this.onBestMoveCallback) {
-											console.log('[AI Debug] Playing move:', bestMove, 'session:', thisAnalysisId);
 											this.onBestMoveCallback(bestMove);
-										} else {
-											console.log('[AI Debug] Not playing - session or position changed',
-												'session match:', thisAnalysisId === this.currentAnalysisId,
-												'position match:', this.currentFen === analysisPositionFen);
 										}
 									}, 300);
 								}
-							} else if (depth >= 6) {
-								console.log('[AI Debug] No valid move found - bestMove:', bestMove, 'format valid:', bestMove && /^[a-h][1-8][a-h][1-8][qrbnQRBN]?$/.test(bestMove));
 							}
 						}
 					}
 				})
 				.catch((error) => {
 					// For continuous analysis, errors are less critical
-					console.log('[AI Debug] Analysis error (may be normal for continuous):', error);
 					if (error.message !== 'Analysis stopped' && error.message !== 'Engine not initialized') {
 						this.state.error = error instanceof Error ? error.message : 'Analysis failed';
 					}
@@ -278,7 +262,6 @@ class AnalysisStore {
 		} catch (error) {
 			this.state.error = error instanceof Error ? error.message : 'Failed to start analysis';
 			this.state.isAnalyzing = false;
-			console.error('Failed to start continuous analysis:', error);
 		}
 	}
 
@@ -293,7 +276,6 @@ class AnalysisStore {
 			return;
 		}
 
-		console.log('[AI Debug] Position update from', this.currentFen?.substring(0, 20), 'to', fen.substring(0, 20));
 
 		// Check if the new position is a game over state
 		const { GameEngine } = await import('$lib/chess/engine/game');
@@ -301,7 +283,6 @@ class AnalysisStore {
 		testEngine.load(fen);
 
 		if (testEngine.isGameOver()) {
-			console.log('[AI Debug] Game over detected, stopping analysis');
 			await this.stopContinuousAnalysis();
 			this.state.result = null;
 			return;
@@ -373,7 +354,6 @@ class AnalysisStore {
 			const testEngine = new GameEngine();
 			testEngine.load(fen);
 			if (testEngine.isGameOver()) {
-				console.log('[AI Debug] Cannot start AI - game is already over');
 				return;
 			}
 		}

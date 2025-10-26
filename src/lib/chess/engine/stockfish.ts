@@ -389,7 +389,6 @@ export class StockfishEngine {
 				const stopPromise = new Promise<string>((resolve) => {
 					const stopTimeout = setTimeout(() => {
 						// If no bestmove after 500ms, force resolve
-						console.log('[UCI Debug] Stop timeout - forcing resolution');
 						if (this.currentCommand && this.currentCommand.command.startsWith('go')) {
 							this.currentCommand.resolve('stopped_by_timeout');
 							this.currentCommand = null;
