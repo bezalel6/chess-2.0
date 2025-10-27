@@ -572,12 +572,11 @@ async cleanup() {
 - **chessground 9.0.0**: Interactive chess board UI
 
 **Stockfish Engine Files (in static/):**
-- **stockfish-17.1-lite-51f59da.js**: Lite worker file (32KB) - Used for GitHub Pages deployment
-- **stockfish-17.1-lite-51f59da.wasm**: Lite WebAssembly binary (7MB) - Single file for simplicity
-- **stockfish-17.1-8e4d048.js**: Full worker file (32KB) - Available for local dev
-- **stockfish-17.1-8e4d048-part-[0-5].wasm**: Full WASM split into 6 parts (78MB total)
+- **stockfish-17.1-8e4d048.js**: Main worker file (32KB)
+- **stockfish-17.1-8e4d048-part-[0-5].wasm**: WebAssembly binary split into 6 parts (78MB total)
+- **stockfish-17.1-lite-51f59da.js**: Lite worker file (32KB) - Alternative version
+- **stockfish-17.1-lite-51f59da.wasm**: Lite WebAssembly binary (7MB) - Single file alternative
 - These files must be served from the same origin due to CORS restrictions
-- The lite version is used by default for easier deployment and compatibility
 
 **Future considerations:**
 - Socket.io for multiplayer (if desired)

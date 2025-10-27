@@ -30,8 +30,8 @@ export class StockfishEngine {
 			try {
 				// Stockfish.js needs to know where to find its WASM files
 				// The worker will load them from the same path as the JS file
-				// Use lite version for simpler deployment (single WASM file instead of 6 parts)
-				let workerPath = '/stockfish-17.1-lite-51f59da.js';
+				// Use full version with multi-part WASM for maximum performance
+				let workerPath = '/stockfish-17.1-8e4d048.js';
 
 				if (this.config.workerPath) {
 					workerPath = this.config.workerPath;
@@ -45,7 +45,6 @@ export class StockfishEngine {
 					}
 				}
 
-				console.log('Initializing Stockfish worker at:', workerPath);
 				this.worker = new Worker(workerPath);
 
 				let workerReady = false;

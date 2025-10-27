@@ -121,12 +121,9 @@ class AnalysisStore {
 			await this.engine.initialize();
 			this.currentConfigVersion = engineConfigStore.version;
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : 'Failed to initialize engine';
-			console.error('Failed to initialize Stockfish:', errorMessage);
-			this.state.error = errorMessage;
+			this.state.error = error instanceof Error ? error.message : 'Failed to initialize engine';
 			this.engine = null;
-			// Don't rethrow the error to prevent UI crashes
-			// The analysis panel will show an error state instead
+			throw error;
 		}
 	}
 
