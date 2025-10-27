@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -18,7 +19,7 @@
 
 		<div class="pt-8">
 			<a
-				href="/play"
+				href="{base}/play"
 				class="inline-block px-8 py-4 bg-[#4a9eff] text-white text-lg font-semibold rounded-lg
 					   hover:bg-[#3d8de6] transition-colors shadow-lg hover:shadow-xl"
 			>

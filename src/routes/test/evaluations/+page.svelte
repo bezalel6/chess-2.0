@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 </script>
 
 <svelte:head>
@@ -9,7 +10,7 @@
 	<div class="max-w-4xl mx-auto">
 		<div class="mb-6">
 			<a
-				href="/"
+				href="{base}/"
 				class="text-[#4a9eff] hover:text-[#3b82f6] transition text-sm flex items-center gap-2"
 			>
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
