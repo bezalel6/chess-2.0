@@ -30,8 +30,8 @@ export class StockfishEngine {
 			try {
 				// Stockfish.js needs to know where to find its WASM files
 				// The worker will load them from the same path as the JS file
-				// Use configured worker path or detect GitHub Pages deployment
-				let workerPath = '/stockfish-17.1-8e4d048.js';
+				// Use lite version for simpler deployment (single WASM file instead of 6 parts)
+				let workerPath = '/stockfish-17.1-lite-51f59da.js';
 
 				if (this.config.workerPath) {
 					workerPath = this.config.workerPath;
