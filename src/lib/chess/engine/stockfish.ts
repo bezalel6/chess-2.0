@@ -30,7 +30,23 @@ export class StockfishEngine {
 			try {
 				// Stockfish.js needs to know where to find its WASM files
 				// The worker will load them from the same path as the JS file
-				this.worker = new Worker('/stockfish-17.1-8e4d048.js');
+				// Use configured worker path or detect GitHub Pages deployment
+				let workerPath = '/stockfish-17.1-8e4d048.js';
+
+				if (this.config.workerPath) {
+					workerPath = this.config.workerPath;
+				} else if (typeof window !== 'undefined') {
+					// Check if we're on GitHub Pages by looking for /chess-2.0/ in the hostname or pathname
+					const isGitHubPages = window.location.hostname.includes('github.io') ||
+						window.location.pathname.startsWith('/chess-2.0');
+
+					if (isGitHubPages) {
+						workerPath = '/chess-2.0' + workerPath;
+					}
+				}
+
+				console.log('Initializing Stockfish worker at:', workerPath);
+				this.worker = new Worker(workerPath);
 
 				let workerReady = false;
 

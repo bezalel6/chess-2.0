@@ -19,6 +19,7 @@ export interface EngineConfig {
 	threads?: number; // Number of threads
 	hash?: number; // Hash table size in MB
 	multiPV?: number; // Number of lines to analyze
+	workerPath?: string; // Path to the Stockfish worker JS file
 }
 
 export interface EngineOptions {
